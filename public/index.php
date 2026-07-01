@@ -1,18 +1,18 @@
 
 <?php
 //Load Header & Layout Global Atas
-include 'public/layout/header.php';
-include 'public/layout/sidebar.php';
+include 'layout/header.php';
+include 'layout/sidebar.php';
 
 //Load Konten Spesifik Halaman (Home)
-include 'public/home/hero.php';
-include 'public/home/sambutan.php';
-include 'public/home/carousel.php';
-include 'public/home/overlap.php';
-include 'public/home/berita.php';
+include 'home/hero.php';
+include 'home/sambutan.php';
+include 'home/carousel.php';
+include 'home/overlap.php';
+include 'home/berita.php';
 
 //Load Footer & Script 
-include 'public/layout/footer.php';
+include 'layout/footer.php';
 ?>
 
 <!-- <!DOCTYPE html>
@@ -27,7 +27,7 @@ include 'public/layout/footer.php';
     <link href='https://fonts.googleapis.com/css?family=Libre Baskerville' rel='stylesheet'>
     <link href="https://fonts.cdnfonts.com/css/brittany-signature" rel="stylesheet">
     
-    <link rel="stylesheet" href="/public/style/style.css">
+    <link rel="stylesheet" href="/style/style.css">
 
     <title>Keluarga Besar H.M Samhudi</title>
 </head>
@@ -95,7 +95,7 @@ include 'public/layout/footer.php';
             <div class="row">
 
                 <div class="col-md-4 d-flex align-items-center justify-content-center col-foto-sambutan">
-                    <img src="/public/images/sambutan.png" alt="H.M Samhudi" class="foto-sambutan">
+                    <img src="/images/sambutan.png" alt="H.M Samhudi" class="foto-sambutan">
                 </div>
 
                 <div class="col-md-8">
@@ -153,49 +153,49 @@ include 'public/layout/footer.php';
         <div id="carousel" class="carousel-container">
 
             <div class="card carousel-card" data-rot="-10">
-                <img src="public/images/family/family1.png" class="carousel-img">
+                <img src="images/family/family1.png" class="carousel-img">
                 <div class="carousel-caption">
                     Keluarga (a)
                 </div>
             </div>
 
             <div class="card carousel-card" data-rot="10">
-                <img src="public/images/family/family2.png" class="carousel-img">
+                <img src="images/family/family2.png" class="carousel-img">
                 <div class="carousel-caption">
                     Keluarga (b)
                 </div>
             </div>
 
             <div class="card carousel-card" data-rot="-5">
-                <img src="public/images/family/family3.png" class="carousel-img">
+                <img src="images/family/family3.png" class="carousel-img">
                 <div class="carousel-caption">
                     Keluarga (c)
                 </div>
             </div>
 
             <div class="card carousel-card" data-rot="8">
-                <img src="public/images/family/family4.png" class="carousel-img">
+                <img src="images/family/family4.png" class="carousel-img">
                 <div class="carousel-caption">
                     Keluarga (d)
                 </div>
             </div>
 
             <div class="card carousel-card" data-rot="-13">
-                <img src="public/images/family/family5.png" class="carousel-img">
+                <img src="images/family/family5.png" class="carousel-img">
                 <div class="carousel-caption">
                     Keluarga (e)
                 </div>
             </div>
 
             <div class="card carousel-card" data-rot="7">
-                <img src="public/images/family/family6.png" class="carousel-img">
+                <img src="images/family/family6.png" class="carousel-img">
                 <div class="carousel-caption">
                     Keluarga (f)
                 </div>
             </div>
 
             <div class="card carousel-card" data-rot="-4">
-                <img src="public/images/family/family7.png" class="carousel-img">
+                <img src="images/family/family7.png" class="carousel-img">
                 <div class="carousel-caption">
                     Keluarga (g)
                 </div>
@@ -210,7 +210,7 @@ include 'public/layout/footer.php';
 
                 <div class="col-lg-7 position-relative">
 
-                    <img src="public/images/sambutan2.png" alt="Keluarga H.M Samhudi" class="img-fluid overlap-img">
+                    <img src="images/sambutan2.png" alt="Keluarga H.M Samhudi" class="img-fluid overlap-img">
 
                     <div class="overlap-ornament"></div>
 
@@ -268,7 +268,7 @@ include 'public/layout/footer.php';
                 <div class="col-lg-6">
                     <div class="news-wrapper">
 
-                        <img src="public/images/berita/berita1.png" class="img-fluid w-100 news-img-main">
+                        <img src="images/berita/berita1.png" class="img-fluid w-100 news-img-main">
 
                         <div class="news-overlay"></div>
 
@@ -293,7 +293,7 @@ include 'public/layout/footer.php';
                         <div class="col-6">
                             <div class="news-wrapper">
 
-                                <img src="public/images/berita/berita2.png" class="img-fluid w-100 news-img-grid">
+                                <img src="images/berita/berita2.png" class="img-fluid w-100 news-img-grid">
 
                                 <div class="news-overlay"></div>
 
@@ -313,7 +313,7 @@ include 'public/layout/footer.php';
                         <div class="col-6">
                             <div class="news-wrapper">
 
-                                <img src="public/images/berita/berita3.png" class="img-fluid w-100 news-img-grid">
+                                <img src="images/berita/berita3.png" class="img-fluid w-100 news-img-grid">
 
                                 <div class="news-overlay"></div>
 
@@ -333,7 +333,7 @@ include 'public/layout/footer.php';
                         <div class="col-6">
                             <div class="news-wrapper">
 
-                                <img src="public/images/berita/berita4.png" class="img-fluid w-100 news-img-grid">
+                                <img src="images/berita/berita4.png" class="img-fluid w-100 news-img-grid">
 
                                 <div class="news-overlay"></div>
 
@@ -353,7 +353,7 @@ include 'public/layout/footer.php';
                         <div class="col-6">
                             <div class="news-wrapper">
 
-                                <img src="public/images/berita/berita5.png" class="img-fluid w-100 news-img-grid">
+                                <img src="images/berita/berita5.png" class="img-fluid w-100 news-img-grid">
 
                                 <div class="news-overlay"></div>
 
