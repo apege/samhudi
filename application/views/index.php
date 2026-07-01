@@ -1,8 +1,9 @@
 
 <?php
 //Load Header & Layout Global Atas
-include 'layout/header.php';
-include 'layout/sidebar.php';
+// include 'layout/header.php';
+// include 'layout/sidebar.php';
+include 'partials/navbar.php';
 
 //Load Konten Spesifik Halaman (Home)
 include 'home/hero.php';

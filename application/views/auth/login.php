@@ -28,11 +28,11 @@ $mode = isset($_GET['mode']) && $_GET['mode'] === 'signup' ? 'signup' : 'login';
       extend: {
         colors: {
           teal: {
-            950: '#0F211F',
-            900: '#1B3835',
-            800: '#22443F',
-            700: '#2E564F',
-            600: '#3D6C63',
+            950: '#1E2B28',
+            900: '#263530',
+            800: '#374D49',
+            700: '#445E59',
+            600: '#536E6A',
           },
           gold: {
             400: '#D4B571',
@@ -77,7 +77,7 @@ $mode = isset($_GET['mode']) && $_GET['mode'] === 'signup' ? 'signup' : 'login';
   .input-line:focus { border-bottom-color: rgba(255,255,255,0.8); }
   .input-line:-webkit-autofill,
   .input-line:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px #22443F inset;
+    -webkit-box-shadow: 0 0 0 1000px #374D49 inset;
     -webkit-text-fill-color: #fff;
     caret-color: #fff;
   }
@@ -97,13 +97,13 @@ $mode = isset($_GET['mode']) && $_GET['mode'] === 'signup' ? 'signup' : 'login';
 </head>
 <body class="h-screen overflow-hidden bg-teal-900 font-body">
 
-  <div class="grid grid-cols-1 md:grid-cols-[52%_48%] h-full">
+  <div class="grid grid-cols-1 md:grid-cols-[40%_60%] h-full">
 
     <!-- ============ LEFT: PHOTO ============ -->
     <div class="relative hidden md:block h-full overflow-hidden">
 
       <!-- Swap btn "Sign up / Login" — gaya outline pill di atas foto -->
-      <div class="absolute bottom-10 left-10 z-20">
+      <div class="absolute bottom-10 left-10 z-30">
         <!-- shown when mode=login → prompt to sign up -->
         <div data-hero="login" data-hidden="<?= $mode === 'login' ? 'false' : 'true' ?>" class="swap-panel">
           <button type="button" data-tab-target="signup"
@@ -120,20 +120,23 @@ $mode = isset($_GET['mode']) && $_GET['mode'] === 'signup' ? 'signup' : 'login';
         </div>
       </div>
 
-      <!-- Photo — ganti src="YOUR_PHOTO.jpg" dengan foto keluarga -->
-      <img src="<?= base_url('assets/img/login.jpeg') ?>" alt="Keluarga H.M Samhudi"
-           class="absolute inset-0 w-full h-full object-cover object-center"
-           onerror="this.style.display='none'">
+      <!-- Fallback background kalau foto belum ada -->
+      <div class="absolute inset-0 bg-teal-900"></div>
 
-      <!-- Fallback gradient kalau foto belum ada -->
-      <div class="absolute inset-0 bg-gradient-to-br from-teal-800/80 via-teal-900/60 to-teal-950/80"></div>
+      <!-- Photo — ganti src dengan path foto keluarga lo -->
+      <img src="<?= base_url('assets/images/login.jpeg') ?>" alt="Keluarga H.M Samhudi"
+					class="absolute inset-0 w-full h-full object-cover z-10" style="object-position: center"
+					onerror="this.style.display='none'">
+
+      <!-- Gradient tipis hanya di bawah biar tombol tetap terbaca -->
+      <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/40 to-transparent z-20"></div>
     </div>
 
     <!-- ============ RIGHT: FORM PANEL ============ -->
     <div class="relative flex flex-col justify-center px-10 sm:px-14 md:px-16 lg:px-20 h-full bg-teal-800">
 
       <!-- Back button -->
-      <a href="YOUR_URL_HERE"
+      <a href="<?= base_url('index.php') ?>"
          class="absolute top-7 right-8 inline-flex items-center gap-1.5 text-white/50 hover:text-white/90 text-sm font-medium transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
