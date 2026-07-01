@@ -10,7 +10,7 @@
     <link href='https://fonts.googleapis.com/css?family=Libre Baskerville' rel='stylesheet'>
     <link href="https://fonts.cdnfonts.com/css/brittany-signature" rel="stylesheet">
     
-    <link rel="stylesheet" href="/public/style/style.css">
+    <link rel="stylesheet" href="style/style.css">
 
     <title>Keluarga Besar H.M Samhudi</title>
 </head>
