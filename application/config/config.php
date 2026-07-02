@@ -23,7 +23,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://localhost/web_kel_samhudi/';
+// Deteksi protokol (http/https)
+$protoname = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+// Gabungkan protokol dengan host server
+$config['base_url'] = $protoname . "://" . $_SERVER['HTTP_HOST'] . str_replace(basename($_SERVER['SCRIPT_NAME']), "", $_SERVER['SCRIPT_NAME']);
 
 /*
 |--------------------------------------------------------------------------
