@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-   
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href='https://fonts.googleapis.com/css?family=Libre Baskerville' rel='stylesheet'>
@@ -22,11 +22,11 @@
                 <a href="#" style="color: #1B3835; text-decoration: none;">HM Samhudin</a>
             </div>
             <ul class="d-none d-md-flex align-items-center mb-0 list-unstyled" style="gap: 50px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 0.875rem; letter-spacing: 0.05em;">
-                <li><a href="#" class="nav-link-custom">Home</a></li>
-                <li><a href="#" class="nav-link-custom">Wasiat</a></li>
-                <li><a href="#" class="nav-link-custom">Yayasan</a></li>
-                <li><a href="#" class="nav-link-custom">Data Keluarga</a></li>
-                <li><a href="#" class="nav-link-custom">Forum Diskusi</a></li>
+                <li><a href="#home" class="nav-link-custom">Home</a></li>
+                <li><a href="#wasiat" class="nav-link-custom">Wasiat</a></li>
+                <li><a href="#yayasan" class="nav-link-custom">Yayasan</a></li>
+                <li><a href="#data_keluarga" class="nav-link-custom">Data Keluarga</a></li>
+                <li><a href="#diskusi" class="nav-link-custom">Forum Diskusi</a></li>
             </ul>
             <div class="d-flex align-items-center">
                 <a href="#" class="d-none d-md-inline-block style-btn-masuk">Masuk</a>
@@ -38,17 +38,31 @@
     <div id="sidebarMenu" style="position:fixed; top:0; left:-100%; width:min(85vw,350px); height:100vh; background:#274d4f; z-index:9999; transition:.4s ease; box-shadow:0 0 20px rgba(0,0,0,.3); overflow-y:auto; font-family: 'Plus Jakarta Sans', sans-serif;">
         <button onclick="closeMenu()" style="position:absolute; top:15px; right:20px; border:none; background:none; color:white; font-size:35px; line-height: 1;">&times;</button>
         <div style="padding:70px 25px 30px 25px;">
-            <a href="#" class="sidebar-link-custom">Home</a>
-            <a href="#" class="sidebar-link-custom">Wasiat almarhum HM Samhudi</a>
-            <a href="#" class="sidebar-link-custom">Yayasan</a>
-            <a href="#" class="sidebar-link-custom">Data Keluarga Besar Samhudi</a>
-            <a href="#" class="sidebar-link-custom">Forum Diskusi</a>
+            <a href="#home" class="sidebar-link-custom">Home</a>
+            <a href="#wasiat" class="sidebar-link-custom">Wasiat</a>
+            <a href="#yayasan" class="sidebar-link-custom">Yayasan</a>
+            <a href="#data_keluarga" class="sidebar-link-custom">Data Keluarga</a>
+            <a href="#diskusi" class="sidebar-link-custom">Forum Diskusi</a>
             <hr style="border-color: rgba(255,255,255,0.2); margin: 25px 0;">
             <a href="#" class="sidebar-link-custom" style="background: rgba(255,255,255,0.1); text-align: center; padding: 10px; border-radius: 50px; margin-bottom: 0;">Masuk</a>
         </div>
     </div>
 
     <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        #wasiat,
+        #yayasan,
+        #data_keluarga,
+        #diskusi {
+            scroll-margin-top: 70px;
+        }
+        #home{
+            scroll-margin-top: 100px;
+        }
+
         .nav-link-custom {
             color: rgba(27, 56, 53, 0.9);
             text-decoration: none;
@@ -110,8 +124,9 @@
     </style>
     <div class="p-3" style="background-color: #2A4D4F;">
 
-        <section class="position-relative d-flex align-items-center justify-content-center text-center m-1 rounded"
-            style=" height:calc(100vh - 2rem); background-image:url('assets/background.png'); background-size:cover; background-position:center; background-repeat:no-repeat;">
+        <section id="home"
+            class="position-relative d-flex align-items-center justify-content-center text-center m-1 rounded"
+            style=" height:calc(100vh - 2rem); background-image:url('assets/images/background.png'); background-size:cover; background-position:center; background-repeat:no-repeat;">
             <div class="position-absolute top-0 start-0 w-100 h-100" style="background:rgba(0,0,0,.45);">
             </div>
             <div class="position-relative text-white">
@@ -127,7 +142,8 @@
 
         </section>
     </div>
-    <section style="padding:60px 0;">
+    <section id="wasiat"
+        style="padding:60px 0;">
         <div class="container">
 
             <div class="row">
@@ -187,7 +203,8 @@
         </div>
     </section>
 
-    <section style="padding:40px 0;background: linear-gradient(to bottom, #8F9F9F 0%, #8F9F9F 30%, #274D4F 30%, #274D4F 100%);
+    <section id="yayasan"
+        style="padding:40px 0;background: linear-gradient(to bottom, #8F9F9F 0%, #8F9F9F 30%, #274D4F 30%, #274D4F 100%);
 ">
 
         <div id="carousel" style="position:relative;height:min(400px,60vw);min-height:250px;width:100%;overflow:hidden;">
@@ -264,7 +281,8 @@
             </div>
         </div>
     </section>
-    <section class="py-5" style="min-height:100vh; display:flex; align-items:center;">
+    <section id="data_keluarga"
+        class="py-5" style="min-height:100vh; display:flex; align-items:center;">
 
         <div class="container">
             <div class="row align-items-center justify-content-center g-4">
@@ -320,7 +338,8 @@
         </div>
 
     </section>
-    <section class="py-5" style="min-height:100vh; background:#274d4f;">
+    <section id="diskusi"
+        class="py-5" style="min-height:100vh; background:#274d4f;">
 
         <div class="container">
 
