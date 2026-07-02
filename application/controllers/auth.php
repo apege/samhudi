@@ -75,7 +75,7 @@ class Auth extends CI_Controller
             // opsional: set cookie remember-me token kalau lo mau dikembangin lagi
         }
 
-        redirect('dashboard'); // ganti sesuai halaman utama lo
+        redirect('homepage'); // ganti sesuai halaman utama lo
     }
 
     private function _fail_login($errors)
@@ -151,7 +151,7 @@ class Auth extends CI_Controller
                 'logged_in' => TRUE,
             ]);
 
-            redirect('dashboard');
+            redirect('homepage');
             return;
         }
 
