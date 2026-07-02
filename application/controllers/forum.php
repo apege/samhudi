@@ -21,7 +21,7 @@ class Forum extends CI_Controller {
         $data['forums'] = $this->Forum_model->get_all_forums();
 
         $this->load->view('templates/header');
-        $this->load->view('templates/sidebar');
+        $this->load->view('partials/navbar');
         $this->load->view('forum/index', $data);
         $this->load->view('templates/footer');
     }
@@ -38,7 +38,7 @@ class Forum extends CI_Controller {
 
         if ($this->form_validation->run() === FALSE) {
             $this->load->view('templates/header');
-            $this->load->view('templates/sidebar');
+            $this->load->view('partials/navbar');
             $this->load->view('forum/create');
             $this->load->view('templates/footer');
         } else {
@@ -64,7 +64,7 @@ class Forum extends CI_Controller {
         $data['comments'] = $this->Forum_model->get_comments($id);
 
         $this->load->view('templates/header');
-        $this->load->view('templates/sidebar');
+        $this->load->view('partials/navbar');
         $this->load->view('forum/view', $data);
         $this->load->view('templates/footer');
     }
