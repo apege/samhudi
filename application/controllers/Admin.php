@@ -26,14 +26,209 @@ class Admin extends CI_Controller
     public function index()
     {
         $data = [
-            'admin_name'    => $this->session->userdata('full_name'),
-            'admin_role'    => $this->session->userdata('role'),
-            'total_members' => $this->Admin_model->get_total_members(),
-            'total_news'    => $this->Admin_model->get_total_news(),
-            'total_forums'  => $this->Admin_model->get_total_forums(),
-            'total_wills'   => $this->Admin_model->get_total_wills(),
+            'admin_name'        => $this->session->userdata('full_name'),
+            'admin_role'        => $this->session->userdata('role'),
+            'total_members'     => $this->Admin_model->get_total_members(),
+            'total_news'        => $this->Admin_model->get_total_news(),
+            'total_forums'      => $this->Admin_model->get_total_forums(),
+            'total_wills'       => $this->Admin_model->get_total_wills(),
+            'recent_activities' => $this->Admin_model->get_recent_activities(5),
         ];
 
         $this->load->view('admin/dashboard', $data);
+    }
+
+    // ================= KELOLA SILSILAH =================
+
+    public function silsilah()
+    {
+        $this->load->model('Silsilah_model');
+        
+        $search = $this->input->get('search') ?? '';
+        $gender = $this->input->get('gender') ?? '';
+        $is_alive = $this->input->get('is_alive') ?? '';
+
+        $data = [
+            'admin_name' => $this->session->userdata('full_name'),
+            'admin_role' => $this->session->userdata('role'),
+            'members'    => $this->Silsilah_model->get_all_members($search, $gender, $is_alive),
+            'search'     => $search,
+            'gender'     => $gender,
+            'is_alive'   => $is_alive
+        ];
+
+        $this->load->view('admin/silsilah/index', $data);
+    }
+
+    public function silsilah_add()
+    {
+        $this->load->model('Silsilah_model');
+        $this->load->library('form_validation');
+
+        $this->form_validation->set_rules('full_name', 'Nama Lengkap', 'required|trim');
+        $this->form_validation->set_rules('gender', 'Jenis Kelamin', 'required');
+
+        if ($this->form_validation->run() == FALSE) {
+            $data = [
+                'admin_name'     => $this->session->userdata('full_name'),
+                'admin_role'     => $this->session->userdata('role'),
+                'families'       => $this->Silsilah_model->get_all_families(),
+                'fathers'        => $this->Silsilah_model->get_parent_options('L'),
+                'mothers'        => $this->Silsilah_model->get_parent_options('P'),
+                'unlinked_users' => $this->Silsilah_model->get_unlinked_users()
+            ];
+
+            $this->load->view('admin/silsilah/add', $data);
+        } else {
+            $photo = null;
+
+            // Handle photo upload
+            if (!empty($_FILES['photo']['name'])) {
+                $config['upload_path']   = './assets/uploads/family/';
+                $config['allowed_types'] = 'gif|jpg|jpeg|png|webp';
+                $config['max_size']      = 2048; // 2MB
+                $config['file_name']     = 'member_' . time();
+
+                // Ensure path exists
+                if (!is_dir($config['upload_path'])) {
+                    mkdir($config['upload_path'], 0777, true);
+                }
+
+                $this->load->library('upload', $config);
+
+                if ($this->upload->do_upload('photo')) {
+                    $upload_data = $this->upload->data();
+                    $photo = 'assets/uploads/family/' . $upload_data['file_name'];
+                }
+            }
+
+            $insert_data = [
+                'family_id'   => $this->input->post('family_id') ? $this->input->post('family_id') : null,
+                'user_id'     => $this->input->post('user_id') ? $this->input->post('user_id') : null,
+                'father_id'   => $this->input->post('father_id') ? $this->input->post('father_id') : null,
+                'mother_id'   => $this->input->post('mother_id') ? $this->input->post('mother_id') : null,
+                'full_name'   => $this->input->post('full_name'),
+                'gender'      => $this->input->post('gender'),
+                'birth_place' => $this->input->post('birth_place'),
+                'birth_date'  => $this->input->post('birth_date') ? $this->input->post('birth_date') : null,
+                'death_date'  => $this->input->post('is_alive') == 1 ? null : ($this->input->post('death_date') ? $this->input->post('death_date') : null),
+                'phone'       => $this->input->post('phone'),
+                'email'       => $this->input->post('email'),
+                'occupation'  => $this->input->post('occupation'),
+                'address'     => $this->input->post('address'),
+                'is_alive'    => $this->input->post('is_alive') ?? 1,
+                'photo'       => $photo
+            ];
+
+            // Auto-create family if none exists
+            if (empty($insert_data['family_id'])) {
+                $families = $this->Silsilah_model->get_all_families();
+                if (empty($families)) {
+                    // Create default family
+                    $this->db->insert('families', [
+                        'family_name' => 'Keluarga Besar H.M Samhudi',
+                        'description' => 'Keluarga Utama'
+                    ]);
+                    $insert_data['family_id'] = $this->db->insert_id();
+                } else {
+                    $insert_data['family_id'] = $families[0]['id'];
+                }
+            }
+
+            $this->Silsilah_model->insert_member($insert_data);
+            $this->session->set_flashdata('success', 'Anggota silsilah berhasil ditambahkan.');
+            redirect('admin/silsilah');
+        }
+    }
+
+    public function silsilah_edit($id)
+    {
+        $this->load->model('Silsilah_model');
+        $this->load->library('form_validation');
+
+        $member = $this->Silsilah_model->get_member_by_id($id);
+        if (!$member) {
+            show_404();
+        }
+
+        $this->form_validation->set_rules('full_name', 'Nama Lengkap', 'required|trim');
+        $this->form_validation->set_rules('gender', 'Jenis Kelamin', 'required');
+
+        if ($this->form_validation->run() == FALSE) {
+            $data = [
+                'admin_name'     => $this->session->userdata('full_name'),
+                'admin_role'     => $this->session->userdata('role'),
+                'member'         => $member,
+                'families'       => $this->Silsilah_model->get_all_families(),
+                'fathers'        => $this->Silsilah_model->get_parent_options('L'),
+                'mothers'        => $this->Silsilah_model->get_parent_options('P'),
+                'unlinked_users' => $this->Silsilah_model->get_unlinked_users($member['user_id'])
+            ];
+
+            $this->load->view('admin/silsilah/edit', $data);
+        } else {
+            $photo = $member['photo'];
+
+            // Handle photo upload
+            if (!empty($_FILES['photo']['name'])) {
+                $config['upload_path']   = './assets/uploads/family/';
+                $config['allowed_types'] = 'gif|jpg|jpeg|png|webp';
+                $config['max_size']      = 2048; // 2MB
+                $config['file_name']     = 'member_' . time();
+
+                // Ensure path exists
+                if (!is_dir($config['upload_path'])) {
+                    mkdir($config['upload_path'], 0777, true);
+                }
+
+                $this->load->library('upload', $config);
+
+                if ($this->upload->do_upload('photo')) {
+                    // Delete old photo if exists
+                    if ($photo && file_exists('./' . $photo)) {
+                        unlink('./' . $photo);
+                    }
+                    $upload_data = $this->upload->data();
+                    $photo = 'assets/uploads/family/' . $upload_data['file_name'];
+                }
+            }
+
+            $update_data = [
+                'family_id'   => $this->input->post('family_id') ? $this->input->post('family_id') : null,
+                'user_id'     => $this->input->post('user_id') ? $this->input->post('user_id') : null,
+                'father_id'   => $this->input->post('father_id') ? $this->input->post('father_id') : null,
+                'mother_id'   => $this->input->post('mother_id') ? $this->input->post('mother_id') : null,
+                'full_name'   => $this->input->post('full_name'),
+                'gender'      => $this->input->post('gender'),
+                'birth_place' => $this->input->post('birth_place'),
+                'birth_date'  => $this->input->post('birth_date') ? $this->input->post('birth_date') : null,
+                'death_date'  => $this->input->post('is_alive') == 1 ? null : ($this->input->post('death_date') ? $this->input->post('death_date') : null),
+                'phone'       => $this->input->post('phone'),
+                'email'       => $this->input->post('email'),
+                'occupation'  => $this->input->post('occupation'),
+                'address'     => $this->input->post('address'),
+                'is_alive'    => $this->input->post('is_alive') ?? 1,
+                'photo'       => $photo
+            ];
+
+            $this->Silsilah_model->update_member($id, $update_data);
+            $this->session->set_flashdata('success', 'Anggota silsilah berhasil diperbarui.');
+            redirect('admin/silsilah');
+        }
+    }
+
+    public function silsilah_delete($id)
+    {
+        $this->load->model('Silsilah_model');
+        $member = $this->Silsilah_model->get_member_by_id($id);
+        if ($member) {
+            // Delete photo file
+            if ($member['photo'] && file_exists('./' . $member['photo'])) {
+                unlink('./' . $member['photo']);
+            }
+            $this->Silsilah_model->delete_member($id);
+            $this->session->set_flashdata('success', 'Anggota silsilah berhasil dihapus.');
+        }
+        redirect('admin/silsilah');
     }
 }

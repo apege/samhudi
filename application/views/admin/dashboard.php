@@ -29,6 +29,12 @@
                         gold: {
                             400: '#D4B571',
                             500: '#C29A4E',
+                        },
+                        brand: {
+                            dark: '#374D49',
+                            medium: '#4D6B67',
+                            light: '#E3E3E3',
+                            red: '#E14343',
                         }
                     },
                     fontFamily: {
@@ -52,89 +58,13 @@
 <body class="bg-teal-950 text-white font-body min-h-screen flex">
 
     <!-- ================= SIDEBAR ================= -->
-    <aside class="w-72 bg-teal-900 border-r border-teal-800 flex flex-col shrink-0">
-        
-        <!-- Profile Section -->
-        <div class="p-6 border-b border-teal-800 flex items-center gap-4">
-            <div class="w-12 h-12 rounded bg-teal-800 flex items-center justify-center text-teal-400 font-bold text-xl border border-teal-700">
-                A
-            </div>
-            <div>
-                <h2 class="font-display font-bold text-sm tracking-tight text-white"><?= htmlspecialchars($admin_name) ?></h2>
-                <p class="text-xs text-teal-400 mt-0.5 capitalize"><?= htmlspecialchars(str_replace('_', ' ', $admin_role)) ?></p>
-            </div>
-        </div>
-
-        <!-- Sidebar Navigation -->
-        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-            
-            <a href="<?= base_url('admin') ?>" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium bg-teal-800 text-gold-400 border-l-4 border-gold-400 transition-all">
-                <i class="bi bi-grid-fill text-lg"></i>
-                Dashboard
-            </a>
-
-            <a href="#" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-800/50 transition-all">
-                <i class="bi bi-diagram-3 text-lg"></i>
-                Kelola Silsilah
-            </a>
-
-            <a href="#" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-800/50 transition-all">
-                <i class="bi bi-file-earmark-text text-lg"></i>
-                Kelola Wasiat
-            </a>
-
-            <a href="#" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-800/50 transition-all">
-                <i class="bi bi-chat-left-text text-lg"></i>
-                Kelola Forum Diskusi
-            </a>
-
-            <a href="#" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-800/50 transition-all">
-                <i class="bi bi-newspaper text-lg"></i>
-                Kelola Berita
-            </a>
-
-            <a href="#" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-800/50 transition-all">
-                <i class="bi bi-bank text-lg"></i>
-                Kelola Yayasan
-            </a>
-
-            <a href="#" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-800/50 transition-all">
-                <i class="bi bi-people text-lg"></i>
-                Kelola Pengguna
-            </a>
-
-            <a href="#" class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-teal-400 hover:text-white hover:bg-teal-800/50 transition-all">
-                <i class="bi bi-gear text-lg"></i>
-                Pengaturan
-            </a>
-
-        </nav>
-
-        <!-- Footer / Logout -->
-        <div class="p-4 border-t border-teal-800">
-            <a href="<?= base_url('auth/logout') ?>" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-950/20 transition-all">
-                <i class="bi bi-box-arrow-left text-lg"></i>
-                Keluar / Logout
-            </a>
-        </div>
-
-    </aside>
+    <?php $this->load->view('admin/sidebar'); ?>
 
     <!-- ================= MAIN CONTENT ================= -->
     <main class="flex-1 flex flex-col overflow-y-auto">
         
         <!-- Header -->
-        <header class="h-20 bg-teal-900 border-b border-teal-800 flex items-center justify-between px-8 shrink-0">
-            <div>
-                <h1 class="font-display font-bold text-lg text-white">Dashboard Overview</h1>
-                <p class="text-xs text-teal-400 mt-0.5">Selamat datang kembali, <?= htmlspecialchars($admin_name) ?></p>
-            </div>
-            
-            <button onclick="window.location.reload();" class="flex items-center gap-2 border border-teal-700 bg-teal-800 hover:bg-teal-700 text-teal-300 hover:text-white px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shadow-sm">
-                <i class="bi bi-arrow-clockwise text-sm"></i>
-                Refresh
-            </button>
-        </header>
+        <?php $this->load->view('admin/header'); ?>
 
         <!-- Body / Dashboard Content -->
         <div class="p-8 space-y-8">
@@ -197,12 +127,88 @@
 
             </div>
 
-            <!-- Future Features Placeholder / Notice Section -->
-            <div class="bg-teal-900/30 border border-teal-800/60 rounded-xl p-6">
-                <h3 class="font-display font-bold text-sm text-teal-300 uppercase tracking-wider mb-4">Informasi Sistem</h3>
-                <div class="text-teal-400/80 text-sm leading-relaxed space-y-2">
-                    <p>• Menu navigasi di sidebar kiri dapat diintegrasikan dengan modul CRUD masing-masing sesuai kebutuhan.</p>
-                    <p>• Hak akses halaman dashboard ini dilindungi menggunakan otorisasi server-side CodeIgniter (hanya user dengan role <strong>admin</strong> dan <strong>super_admin</strong> yang diperbolehkan masuk).</p>
+            <!-- Aktivitas Terbaru Section -->
+            <div class="bg-gradient-to-b from-[#374D49]/20 to-[#374D49]/5 border border-[#4D6B67]/20 rounded-2xl p-8 shadow-lg">
+                <h3 class="font-display font-bold text-xl text-white mb-6">Aktivitas Terbaru</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-[#4D6B67]/20">
+                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Aktivitas</th>
+                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Pengguna</th>
+                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Waktu</th>
+                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Status</th>
+                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#4D6B67]/10">
+                            <?php 
+                            // Helper function to format date into Indonesian
+                            if (!function_exists('format_indo_date')) {
+                                function format_indo_date($datetime) {
+                                    $months = [
+                                        1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                                    ];
+                                    $timestamp = strtotime($datetime);
+                                    $d = date('j', $timestamp);
+                                    $m = $months[(int)date('n', $timestamp)];
+                                    $y = date('Y', $timestamp);
+                                    return "$d $m $y";
+                                }
+                            }
+                            ?>
+                            <?php if (!empty($recent_activities)): ?>
+                                <?php foreach ($recent_activities as $activity): ?>
+                                    <tr>
+                                        <td class="py-4 text-sm text-white/90 font-medium"><?= htmlspecialchars($activity['aktivitas']) ?></td>
+                                        <td class="py-4 text-sm text-white/80"><?= htmlspecialchars($activity['pengguna']) ?></td>
+                                        <td class="py-4 text-sm text-white/60"><?= format_indo_date($activity['waktu']) ?></td>
+                                        <td class="py-4 text-sm">
+                                            <span class="text-white/80"><?= htmlspecialchars($activity['status']) ?></span>
+                                        </td>
+                                        <td class="py-4 text-sm">
+                                            <a href="<?= base_url('admin/' . $activity['tipe'] . '/detail/' . $activity['reff_id']) ?>" class="font-bold text-white hover:underline transition-all">Detail</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td class="py-4 text-sm text-white/90 font-medium">Membuat Postingan Forum</td>
+                                    <td class="py-4 text-sm text-white/80">Auli</td>
+                                    <td class="py-4 text-sm text-white/60">1 Juni 2026</td>
+                                    <td class="py-4 text-sm">
+                                        <span class="text-white/80">Menunggu</span>
+                                    </td>
+                                    <td class="py-4 text-sm">
+                                        <a href="#" class="font-bold text-white hover:underline transition-all">Detail</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-4 text-sm text-white/90 font-medium">Menambahkan Data Family</td>
+                                    <td class="py-4 text-sm text-white/80">Alif</td>
+                                    <td class="py-4 text-sm text-white/60">15 Juni 2026</td>
+                                    <td class="py-4 text-sm">
+                                        <span class="text-white/80">Berhasil</span>
+                                    </td>
+                                    <td class="py-4 text-sm">
+                                        <a href="#" class="font-bold text-white hover:underline transition-all">Detail</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-4 text-sm text-white/90 font-medium">Membuat Postingan Forum</td>
+                                    <td class="py-4 text-sm text-white/80">Richa</td>
+                                    <td class="py-4 text-sm text-white/60">28 Mei 2026</td>
+                                    <td class="py-4 text-sm">
+                                        <span class="text-white/80">Berhasil</span>
+                                    </td>
+                                    <td class="py-4 text-sm">
+                                        <a href="#" class="font-bold text-white hover:underline transition-all">Detail</a>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
