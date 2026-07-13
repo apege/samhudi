@@ -25,7 +25,7 @@
     }
 </style>
 
-<section class="carousel-section w-full overflow-x-hidden">
+<section class="carousel-section w-full overflow-x-hidden reveal reveal-scale-up">
     <div id="carousel" class="carousel-container">
 
         <div class="card carousel-card" data-rot="-10">
