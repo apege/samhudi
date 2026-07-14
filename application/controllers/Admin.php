@@ -109,7 +109,35 @@ class Admin extends CI_Controller
             redirect('admin#banner-section');
         }
 
+        // Handle sambutan text update
+        if ($this->input->method() === 'post' && $this->input->post('save_sambutan')) {
+            $pars_raw = $this->input->post('sambutan_pars', TRUE);
+            $pars = array_values(array_filter(array_map('trim', preg_split('/\n\s*\n/', $pars_raw))));
+            file_put_contents(FCPATH . 'assets/sambutan-config.json', json_encode([
+                'title' => $this->input->post('sambutan_title', TRUE),
+                'paragraphs' => $pars,
+                'closing' => $this->input->post('sambutan_closing', TRUE),
+                'sender' => $this->input->post('sambutan_sender', TRUE),
+            ]));
+            $this->session->set_flashdata('sambutan_success', 'Teks sambutan berhasil diperbarui.');
+            redirect('admin#sambutan-section');
+        }
+
+        // Handle intro text update
+        if ($this->input->method() === 'post' && $this->input->post('save_intro')) {
+            $intro_text = $this->input->post('intro_text', TRUE);
+            $intro_sender = $this->input->post('intro_sender', TRUE);
+            file_put_contents(FCPATH . 'assets/intro-config.json', json_encode([
+                'text' => $intro_text,
+                'sender' => $intro_sender
+            ]));
+            $this->session->set_flashdata('intro_success', 'Teks intro berhasil diperbarui.');
+            redirect('admin#intro-section');
+        }
+
         $banner_config = json_decode(file_get_contents($config_path), true);
+        $intro_config = json_decode(file_get_contents(FCPATH . 'assets/intro-config.json'), true);
+        $sambutan_config = json_decode(file_get_contents(FCPATH . 'assets/sambutan-config.json'), true);
 
         $data = [
             'admin_name'        => $this->session->userdata('full_name'),
@@ -121,6 +149,12 @@ class Admin extends CI_Controller
             'recent_activities' => $this->Admin_model->get_recent_activities(5),
             'selected_banner'   => $banner_config['file'] ?? 'background2.png',
             'carousel_items'    => json_decode(file_get_contents($carousel_config_path), true),
+            'intro_text'        => $intro_config['text'] ?? "Dengan rasa syukur dan bangga,\nkami persembahkan website ini\nsebagai ruang digital untuk\nmenyambung tali silaturahmi",
+            'intro_sender'      => $intro_config['sender'] ?? 'From (nama)',
+            'sambutan_title'    => $sambutan_config['title'] ?? "Assalamu'alaikum Warahmatullahi Wabarakatuh,",
+            'sambutan_pars'     => $sambutan_config['paragraphs'] ?? [],
+            'sambutan_closing'  => $sambutan_config['closing'] ?? "Wassalamu'alaikum Warahmatullahi Wabarakatuh.",
+            'sambutan_sender'   => $sambutan_config['sender'] ?? 'Keluarga Besar H.M. Samhudi',
         ];
 
         $this->load->view('admin/dashboard', $data);
@@ -136,19 +170,37 @@ class Admin extends CI_Controller
         $gender = $this->input->get('gender') ?? '';
         $is_alive = $this->input->get('is_alive') ?? '';
         $generasi = $this->input->get('generasi') ?? '';
+        $status = $this->input->get('status') ?? '';
 
         $data = [
             'admin_name' => $this->session->userdata('full_name'),
             'admin_role' => $this->session->userdata('role'),
-            'members'    => $this->Silsilah_model->get_all_members($search, $gender, $is_alive, $generasi),
+            'members'    => $this->Silsilah_model->get_all_members($search, $gender, $is_alive, $generasi, $status),
             'search'     => $search,
             'gender'     => $gender,
             'is_alive'   => $is_alive,
             'generasi'   => $generasi,
+            'status'     => $status,
             'max_generasi' => $this->Silsilah_model->get_max_generation()
         ];
 
         $this->load->view('admin/silsilah/index', $data);
+    }
+
+    public function silsilah_approve($id)
+    {
+        $this->load->model('Silsilah_model');
+        $this->Silsilah_model->update_member($id, ['status' => 'approved']);
+        $this->session->set_flashdata('success', 'Anggota berhasil disetujui dan akan tampil di pohon keluarga.');
+        redirect('admin/silsilah');
+    }
+
+    public function silsilah_reject($id)
+    {
+        $this->load->model('Silsilah_model');
+        $this->Silsilah_model->update_member($id, ['status' => 'rejected']);
+        $this->session->set_flashdata('success', 'Penambahan anggota berhasil ditolak.');
+        redirect('admin/silsilah');
     }
 
     public function silsilah_add()
@@ -393,11 +445,20 @@ class Admin extends CI_Controller
                     mkdir($config['upload_path'], 0777, true);
                 }
 
-                $this->load->library('upload', $config);
+                $this->load->library('upload');
+                $this->upload->initialize($config);
 
                 if ($this->upload->do_upload('thumbnail')) {
                     $upload_data = $this->upload->data();
                     $thumbnail   = 'assets/uploads/news/' . $upload_data['file_name'];
+                } else {
+                    $data = [
+                        'admin_name' => $this->session->userdata('full_name'),
+                        'admin_role' => $this->session->userdata('role'),
+                        'upload_error' => $this->upload->display_errors('', '')
+                    ];
+                    $this->load->view('admin/berita/add', $data);
+                    return;
                 }
             }
 
@@ -451,7 +512,8 @@ class Admin extends CI_Controller
                     mkdir($config['upload_path'], 0777, true);
                 }
 
-                $this->load->library('upload', $config);
+                $this->load->library('upload');
+                $this->upload->initialize($config);
 
                 if ($this->upload->do_upload('thumbnail')) {
                     if ($thumbnail && file_exists('./' . $thumbnail)) {
@@ -459,6 +521,15 @@ class Admin extends CI_Controller
                     }
                     $upload_data = $this->upload->data();
                     $thumbnail   = 'assets/uploads/news/' . $upload_data['file_name'];
+                } else {
+                    $data = [
+                        'admin_name' => $this->session->userdata('full_name'),
+                        'admin_role' => $this->session->userdata('role'),
+                        'news'       => $news,
+                        'upload_error' => $this->upload->display_errors('', '')
+                    ];
+                    $this->load->view('admin/berita/edit', $data);
+                    return;
                 }
             }
 
