@@ -124,19 +124,37 @@ class Admin extends CI_Controller
         $gender = $this->input->get('gender') ?? '';
         $is_alive = $this->input->get('is_alive') ?? '';
         $generasi = $this->input->get('generasi') ?? '';
+        $status = $this->input->get('status') ?? '';
 
         $data = [
             'admin_name' => $this->session->userdata('full_name'),
             'admin_role' => $this->session->userdata('role'),
-            'members'    => $this->Silsilah_model->get_all_members($search, $gender, $is_alive, $generasi),
+            'members'    => $this->Silsilah_model->get_all_members($search, $gender, $is_alive, $generasi, $status),
             'search'     => $search,
             'gender'     => $gender,
             'is_alive'   => $is_alive,
             'generasi'   => $generasi,
+            'status'     => $status,
             'max_generasi' => $this->Silsilah_model->get_max_generation()
         ];
 
         $this->load->view('admin/silsilah/index', $data);
+    }
+
+    public function silsilah_approve($id)
+    {
+        $this->load->model('Silsilah_model');
+        $this->Silsilah_model->update_member($id, ['status' => 'approved']);
+        $this->session->set_flashdata('success', 'Anggota berhasil disetujui dan akan tampil di pohon keluarga.');
+        redirect('admin/silsilah');
+    }
+
+    public function silsilah_reject($id)
+    {
+        $this->load->model('Silsilah_model');
+        $this->Silsilah_model->update_member($id, ['status' => 'rejected']);
+        $this->session->set_flashdata('success', 'Penambahan anggota berhasil ditolak.');
+        redirect('admin/silsilah');
     }
 
     public function silsilah_add()

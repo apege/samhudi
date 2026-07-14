@@ -19,7 +19,7 @@ class Silsilah_model extends CI_Model
     /**
      * Get family members with filter and parent names
      */
-    public function get_all_members($search = '', $gender = '', $is_alive = '', $generasi = '')
+    public function get_all_members($search = '', $gender = '', $is_alive = '', $generasi = '', $status = '')
     {
         $this->db->select('fm.*, f.family_name, 
             fat.full_name as father_name, 
@@ -47,7 +47,11 @@ class Silsilah_model extends CI_Model
             $this->db->where('fm.is_alive', $is_alive);
         }
 
-        $this->db->order_by('fm.full_name', 'ASC');
+        if ($status !== '') {
+            $this->db->where('fm.status', $status);
+        }
+
+        $this->db->order_by('fm.id', 'DESC');
         $members = $this->db->get()->result_array();
 
         // Ambil semua parent_id untuk hitung kedalaman (generasi)

@@ -28,7 +28,8 @@ class Familytree extends CI_Controller
             return;
         }
 
-        $data = $this->Family_model->get_member_full_details($id);
+        $bypass = $this->input->get('preview') == 1;
+        $data = $this->Family_model->get_member_full_details($id, $bypass);
 
         if (!$data) {
             echo json_encode(['error' => 'Data tidak ditemukan']);
@@ -83,8 +84,8 @@ class Familytree extends CI_Controller
             'full_name' => $this->input->post('full_name'),
             'birth_date' => $this->input->post('birth_date'),
             'gender' => $this->input->post('gender'), // 'L' atau 'P'
-            // Default stat
-            'is_alive' => 1
+            'is_alive' => 1,
+            'status' => 'pending'
         ];
         
         if (empty($role) || empty($rel_id) || empty($data['full_name']) || empty($data['gender'])) {
@@ -110,6 +111,7 @@ class Familytree extends CI_Controller
         $result = $this->Family_model->insert_new_member($data, $role, $rel_id);
         
         if ($result['status']) {
+            $result['message'] = 'Data berhasil dikirim dan sedang menunggu persetujuan Admin.';
             $this->session->set_flashdata('success', $result['message']);
         }
         

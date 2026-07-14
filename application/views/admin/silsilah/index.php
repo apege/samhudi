@@ -85,7 +85,7 @@
 
             <!-- Filters & Search -->
             <div class="bg-brand-dark/20 border border-brand-medium/20 rounded-2xl p-6 shadow-sm">
-                <form method="GET" action="<?= base_url('admin/silsilah') ?>" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <form method="GET" action="<?= base_url('admin/silsilah') ?>" class="grid grid-cols-1 md:grid-cols-6 gap-4">
                     
                     <!-- Search Input -->
                     <div class="relative md:col-span-2">
@@ -109,6 +109,16 @@
                             <?php for ($i = 1; $i <= $max_generasi; $i++): ?>
                                 <option value="<?= $i ?>" <?= (string)$generasi === (string)$i ? 'selected' : '' ?>>Gen-<?= $i ?></option>
                             <?php endfor; ?>
+                        </select>
+                    </div>
+
+                    <!-- Persetujuan Filter -->
+                    <div>
+                        <select name="status" class="w-full bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-brand-medium transition-all">
+                            <option value="">Semua Status</option>
+                            <option value="pending" <?= ($status ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
+                            <option value="approved" <?= ($status ?? '') === 'approved' ? 'selected' : '' ?>>Approved</option>
+                            <option value="rejected" <?= ($status ?? '') === 'rejected' ? 'selected' : '' ?>>Rejected</option>
                         </select>
                     </div>
 
@@ -138,7 +148,8 @@
                                 <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Generasi</th>
                                 <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Orang Tua</th>
                                 <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Kontak / TTL</th>
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Status</th>
+                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Persetujuan</th>
+                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Status Hidup</th>
                                 <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -189,6 +200,19 @@
                                             </div>
                                         </td>
 
+                                        <!-- Persetujuan -->
+                                        <td class="py-4 text-sm">
+                                            <?php if ($member['status'] == 'approved'): ?>
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Approved</span>
+                                            <?php elseif ($member['status'] == 'rejected'): ?>
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/30">Rejected</span>
+                                            <?php else: ?>
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 flex items-center w-max gap-1">
+                                                    <i class="bi bi-hourglass-split"></i> Pending
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+
                                         <!-- Status Hidup / Wafat -->
                                         <td class="py-4 text-sm">
                                             <?php if ($member['is_alive'] == 1): ?>
@@ -199,8 +223,17 @@
                                         </td>
 
                                         <!-- Actions -->
-                                        <td class="py-4 text-right space-x-2">
-                                            <a href="<?= base_url('admin/silsilah_edit/' . $member['id']) ?>" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black border border-yellow-500/20 transition-all">
+                                        <td class="py-4 text-right space-x-2 whitespace-nowrap">
+                                            <?php if ($member['status'] == 'pending'): ?>
+                                                <a href="<?= base_url('admin/silsilah_approve/' . $member['id']) ?>" onclick="return confirm('Setujui anggota ini untuk tampil di silsilah keluarga?')" class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 transition-all text-xs font-bold">
+                                                    <i class="bi bi-check-lg mr-1"></i> Terima
+                                                </a>
+                                                <a href="<?= base_url('admin/silsilah_reject/' . $member['id']) ?>" onclick="return confirm('Tolak pendaftaran anggota ini?')" class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all text-xs font-bold">
+                                                    <i class="bi bi-x-lg mr-1"></i> Tolak
+                                                </a>
+                                            <?php endif; ?>
+                                            
+                                            <a href="<?= base_url('admin/silsilah_edit/' . $member['id']) ?>" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black border border-yellow-500/20 transition-all" title="Edit">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
                                             <a href="<?= base_url('admin/silsilah_delete/' . $member['id']) ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus anggota ini? Data relasi silsilah anak juga akan terputus.')" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-brand-red/10 text-brand-red hover:bg-brand-red hover:text-white border border-brand-red/20 transition-all">
