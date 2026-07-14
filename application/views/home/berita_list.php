@@ -1,22 +1,47 @@
+<?php
+/**
+ * @var array  $news_items
+ * @var array  $other_news
+ * @var string $pagination_links
+ * @var int    $total_news
+ * @var int    $current_offset
+ * @var int    $per_page
+ */
+?>
 <style>
-.berita-list-hero {
-    background: linear-gradient(135deg, #1B3835 0%, #2E564F 50%, #3D6C63 100%);
-    padding: 80px 0 60px;
+/* ===== DARK THEME — mirroring Forum Diskusi ===== */
+:root {
+    --bl-bg:       #15201E;
+    --bl-surface:  #1E2E2B;
+    --bl-border:   rgba(55,77,73,0.45);
+    --bl-teal:     #377C80;
+    --bl-orange:   #E49438;
+    --bl-muted:    #B1CDCE;
+    --bl-white:    #FFFFFF;
+}
+
+/* Override body background for this page */
+body { background-color: var(--bl-bg) !important; color: var(--bl-white); }
+
+/* ---------- HERO ---------- */
+.bl-hero {
+    background: linear-gradient(135deg, #0d1614 0%, #15201E 40%, #1E3631 80%, #2a4a42 100%);
+    padding: 70px 0 50px;
     position: relative;
     overflow: hidden;
 }
-.berita-list-hero::before {
+.bl-hero::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 500px;
-    height: 500px;
+    top: -40%;
+    right: -8%;
+    width: 480px;
+    height: 480px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.03);
+    background: radial-gradient(circle, rgba(55,124,128,0.12) 0%, transparent 70%);
     pointer-events: none;
 }
-.berita-list-hero::after {
+.bl-hero::after {
     content: '';
     position: absolute;
     bottom: -30%;
@@ -24,251 +49,264 @@
     width: 350px;
     height: 350px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.04);
+    background: radial-gradient(circle, rgba(228,148,56,0.06) 0%, transparent 70%);
     pointer-events: none;
 }
-.berita-list-hero h1 {
+.bl-hero-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 2.8rem;
+    font-size: 0.8rem;
+}
+.bl-hero-breadcrumb a   { color: rgba(177,205,206,0.6); text-decoration: none; transition: color 0.2s; }
+.bl-hero-breadcrumb a:hover { color: var(--bl-muted); }
+.bl-hero-breadcrumb .sep { color: rgba(177,205,206,0.3); font-size: 0.7rem; }
+.bl-hero-breadcrumb span { color: rgba(255,255,255,0.85); font-weight: 600; }
+
+.bl-hero h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 2.6rem;
     font-weight: 800;
-    color: #fff;
-    margin-bottom: 12px;
+    color: var(--bl-white);
+    margin-bottom: 10px;
     position: relative;
     z-index: 1;
 }
-.berita-list-hero p {
-    color: rgba(255,255,255,0.7);
-    font-size: 1rem;
+.bl-hero p {
+    color: var(--bl-muted);
+    font-size: 0.95rem;
     position: relative;
     z-index: 1;
 }
-.berita-list-section {
-    background: #f8f9fa;
-    min-height: 60vh;
-    padding: 60px 0;
+.bl-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(55,124,128,0.2);
+    border: 1px solid rgba(55,124,128,0.4);
+    color: #7ecdd1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 50px;
+    margin-bottom: 18px;
+    letter-spacing: 0.06em;
+    position: relative;
+    z-index: 1;
 }
 
-/* ======= Item Berita (tanpa card/shadow, dipisah garis) ======= */
-.news-item {
-    margin-bottom: 36px;
-    padding-bottom: 36px;
-    padding-top: 50px; /* ruang cadangan untuk gambar no-bg yang "timbul" ke atas */
-    border-bottom: 1px solid rgba(0,0,0,0.07);
-    position: relative;
+/* ---------- MAIN SECTION ---------- */
+.bl-section {
+    background: var(--bl-bg);
+    min-height: 60vh;
+    padding: 50px 0 70px;
 }
-.news-item-img {
-    width: 100%;
-    height: 220px;
-    border-radius: 14px;
+
+/* ---------- NEWS CARD (dark) ---------- */
+.bl-card {
+    background: var(--bl-surface);
+    border: 1px solid var(--bl-border);
+    border-radius: 18px;
     overflow: hidden;
-    margin-bottom: 16px;
-    background: #eef1f0; /* fallback belakang untuk gambar tanpa background */
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
-.news-item-img img {
+.bl-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    border-color: rgba(55,124,128,0.5);
+}
+.bl-card-img {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+}
+.bl-card-img img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     position: absolute;
-    top: 0;
-    left: 0;
-    transition: transform 0.4s ease;
+    inset: 0;
+    transition: transform 0.45s ease;
 }
-.news-item:hover .news-item-img img {
-    transform: scale(1.04);
-}
+.bl-card:hover .bl-card-img img { transform: scale(1.06); }
 
-/* ======= Gambar tanpa background (PNG transparan) - efek "timbul" AMAN (tidak overlap) ======= */
-.news-item.no-bg-img {
-    overflow: visible;
-}
-.news-item.no-bg-img .news-item-img {
-    overflow: visible;
+/* PNG transparent "timbul" effect */
+.bl-card.no-bg .bl-card-img {
     background: transparent;
+    overflow: visible;
 }
-.news-item.no-bg-img .news-item-img img {
-    position: absolute;
-    top: -50px;               /* naik ke ruang cadangan (padding-top item), bukan ke row atasnya */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    height: calc(100% + 50px); /* lebih tinggi mengikuti ruang cadangan */
-    object-fit: contain;       /* jangan crop, tampilkan utuh */
-    filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
-    z-index: 2;
-}
-.news-item.no-bg-img:hover .news-item-img img {
-    transform: translateX(-50%) translateY(-8px) scale(1.04);
+.bl-card.no-bg .bl-card-img img {
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.35));
+    padding: 8px;
 }
 
-.news-card-meta {
-    font-size: 0.78rem;
-    color: #888;
-    margin-bottom: 10px;
+.bl-card-body {
+    padding: 18px 20px 22px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.bl-card-meta {
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 0.73rem;
+    color: var(--bl-muted);
+    margin-bottom: 10px;
 }
-.news-card-meta .meta-dot {
-    width: 4px;
-    height: 4px;
+.bl-card-meta .dot {
+    width: 3px; height: 3px;
     border-radius: 50%;
-    background: #ccc;
+    background: rgba(177,205,206,0.4);
     display: inline-block;
 }
-.news-item-title {
+.bl-card-title {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: #1a2e2b;
-    margin-bottom: 10px;
+    color: var(--bl-white);
+    margin-bottom: 8px;
     line-height: 1.45;
+    flex: 1;
 }
-.news-item-title a {
-    color: #1a2e2b;
+.bl-card-title a {
+    color: var(--bl-white);
     text-decoration: none;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: color 0.2s ease;
+    transition: color 0.2s;
 }
-.news-item-title a:hover {
-    color: #2E564F;
-}
-.news-card-excerpt {
-    font-size: 0.85rem;
-    color: #6c757d;
+.bl-card-title a:hover { color: var(--bl-teal); }
+.bl-card-excerpt {
+    font-size: 0.8rem;
+    color: rgba(177,205,206,0.7);
     line-height: 1.6;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
-.news-card-btn {
+.bl-card-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #2E564F;
+    color: var(--bl-teal);
+    font-size: 0.75rem;
     font-weight: 700;
-    font-size: 0.82rem;
     text-decoration: none;
-    letter-spacing: 0.04em;
-    transition: gap 0.2s ease, color 0.2s ease;
+    letter-spacing: 0.06em;
+    transition: gap 0.2s, color 0.2s;
+    margin-top: auto;
 }
-.news-card-btn:hover {
-    color: #1B3835;
-    gap: 10px;
-}
-.empty-state {
-    text-align: center;
-    padding: 80px 20px;
-    color: #aaa;
-}
-.empty-state i {
-    font-size: 3.5rem;
-    margin-bottom: 16px;
-    display: block;
-}
+.bl-card-btn:hover { color: #7ecdd1; gap: 10px; }
 
-/* ======= Pagination ======= */
-.custom-pagination {
-    gap: 6px;
+/* ---------- EMPTY STATE ---------- */
+.bl-empty {
+    text-align: center;
+    padding: 70px 20px;
+    color: rgba(177,205,206,0.5);
 }
+.bl-empty i { font-size: 3rem; margin-bottom: 14px; display: block; }
+.bl-empty h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: var(--bl-muted); }
+
+/* ---------- PAGINATION (dark) ---------- */
+.custom-pagination { gap: 5px; }
 .custom-pagination .page-link {
-    border: none;
+    border: 1px solid var(--bl-border) !important;
     border-radius: 10px !important;
-    color: #2E564F;
+    color: var(--bl-muted);
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 600;
-    font-size: 0.85rem;
-    padding: 8px 14px;
-    background: #fff;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    font-size: 0.82rem;
+    padding: 7px 13px;
+    background: var(--bl-surface);
+    transition: all 0.2s;
 }
 .custom-pagination .page-item.active .page-link {
-    background: linear-gradient(135deg, #1B3835, #2E564F);
+    background: linear-gradient(135deg, #1B3835, #377C80);
     color: #fff;
-    box-shadow: none;
+    border-color: transparent !important;
 }
 .custom-pagination .page-link:hover {
-    background: #eef2f1;
-    color: #1B3835;
+    background: rgba(55,124,128,0.25);
+    color: #fff;
+    border-color: rgba(55,124,128,0.5) !important;
 }
-
-/* ======= Sidebar Berita Lainnya (SATU card abu, item TANPA card) ======= */
-.sidebar-other-news {
-    position: sticky;
-    top: 90px;
-}
-.sidebar-title {
+.bl-page-info {
+    text-align: center;
+    font-size: 0.78rem;
+    color: rgba(177,205,206,0.55);
+    margin-bottom: 8px;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.9rem;
+}
+.bl-page-info strong { color: var(--bl-muted); }
+
+/* ---------- SIDEBAR ---------- */
+.bl-sidebar { position: sticky; top: 90px; }
+.bl-sidebar-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.78rem;
     font-weight: 800;
-    color: #1a2e2b;
+    color: var(--bl-muted);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 18px;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.sidebar-title::after {
+.bl-sidebar-title::after {
     content: '';
     flex: 1;
-    height: 2px;
-    background: linear-gradient(90deg, #2E564F, transparent);
-    border-radius: 2px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--bl-teal), transparent);
 }
-.sidebar-berita-box {
-    background: #eef0ef; /* abu */
+.bl-sidebar-box {
+    background: var(--bl-surface);
+    border: 1px solid var(--bl-border);
     border-radius: 18px;
-    padding: 18px;
+    padding: 16px;
 }
-.sidebar-berita-item {
+.bl-sidebar-item {
     display: flex;
-    gap: 14px;
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(55,77,73,0.3);
     text-decoration: none;
-    color: inherit;
+    transition: opacity 0.2s;
 }
-.sidebar-berita-item:first-child {
-    padding-top: 2px;
-}
-.sidebar-berita-item:last-child {
-    border-bottom: none;
-    padding-bottom: 2px;
-}
-.sidebar-berita-item .thumb {
-    width: 72px;
-    height: 60px;
+.bl-sidebar-item:hover { opacity: 0.85; }
+.bl-sidebar-item:first-child { padding-top: 2px; }
+.bl-sidebar-item:last-child  { border-bottom: none; padding-bottom: 2px; }
+.bl-sidebar-item .sthumb {
+    width: 68px;
+    height: 56px;
     border-radius: 10px;
     overflow: hidden;
     flex-shrink: 0;
-}
-.sidebar-berita-item .thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.sidebar-berita-item .thumb .no-img {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #2E564F, #3D6C63);
+    background: rgba(55,124,128,0.15);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255,255,255,0.6);
-    font-size: 1.3rem;
 }
-.sidebar-berita-item .info { flex: 1; min-width: 0; }
-.sidebar-berita-item .info .on-title {
+.bl-sidebar-item .sthumb img { width: 100%; height: 100%; object-fit: cover; }
+.bl-sidebar-item .sinfo { flex: 1; min-width: 0; }
+.bl-sidebar-item .sinfo .stitle {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    color: #1a2e2b;
+    color: var(--bl-white);
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -276,84 +314,88 @@
     overflow: hidden;
     margin-bottom: 5px;
 }
-.sidebar-berita-item .info .on-date {
-    font-size: 0.73rem;
-    color: #999;
+.bl-sidebar-item .sinfo .sdate {
+    font-size: 0.7rem;
+    color: rgba(177,205,206,0.55);
     display: flex;
     align-items: center;
     gap: 5px;
 }
 </style>
 
-<!-- Hero Berita -->
-<section class="berita-list-hero">
+<!-- Hero -->
+<section class="bl-hero">
     <div class="container">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
-            <a href="<?= base_url() ?>" style="color: rgba(255,255,255,0.55); font-size: 0.82rem; text-decoration: none; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;">Home</a>
-            <i class="bi bi-chevron-right" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;"></i>
-            <span style="color: rgba(255,255,255,0.85); font-size: 0.82rem; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600;">Berita</span>
+        <div class="bl-hero-breadcrumb">
+            <a href="<?= base_url() ?>">Home</a>
+            <i class="bi bi-chevron-right sep"></i>
+            <span>Berita</span>
         </div>
-        <h1>Berita & Informasi</h1>
+        <div class="bl-hero-badge">
+            <i class="bi bi-newspaper"></i>
+            Berita &amp; Informasi
+        </div>
+        <h1>Berita &amp; Informasi</h1>
         <p>Kumpulan berita dan informasi terkini seputar Keluarga Besar H.M Samhudi</p>
     </div>
 </section>
 
 <!-- Daftar Berita -->
-<section class="berita-list-section">
+<section class="bl-section">
     <div class="container">
         <div class="row g-4">
 
-            <!-- Kiri: Daftar Berita (2 kolom horizontal) -->
+            <!-- Kiri: Grid Berita -->
             <div class="col-lg-8">
                 <?php if (!empty($news_items)): ?>
                     <div class="row g-4">
                         <?php foreach ($news_items as $item): ?>
                         <?php
-                            // Tentukan path thumbnail (fallback ke default jika tidak ada / tidak ditemukan)
                             $thumbPath = !empty($item['thumbnail']) && file_exists('./' . $item['thumbnail'])
                                 ? $item['thumbnail']
                                 : 'assets/images/berita/berita1.png';
-                            // Deteksi gambar tanpa background (PNG transparan) untuk efek "timbul"
                             $isNoBg = strtolower(pathinfo($thumbPath, PATHINFO_EXTENSION)) === 'png';
                         ?>
                         <div class="col-md-6">
-                            <div class="news-item<?= $isNoBg ? ' no-bg-img' : '' ?>">
-                                <div class="news-item-img">
-                                    <img src="<?= base_url($thumbPath) ?>" alt="<?php echo htmlspecialchars($item['title']); ?>">
+                            <div class="bl-card<?= $isNoBg ? ' no-bg' : '' ?>">
+                                <div class="bl-card-img">
+                                    <img src="<?= base_url($thumbPath) ?>" alt="<?= htmlspecialchars($item['title']) ?>">
                                 </div>
-                                <div class="news-card-meta">
-                                    <i class="bi bi-calendar3"></i>
-                                    <?php
-                                        $months = [1=>'Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-                                        $ts = strtotime($item['created_at']);
-                                        echo date('j', $ts) . ' ' . $months[(int)date('n', $ts)] . ' ' . date('Y', $ts);
-                                    ?>
-                                    <span class="meta-dot"></span>
-                                    <i class="bi bi-person"></i>
-                                    <?php echo htmlspecialchars($item['author_name'] ?? 'Admin'); ?>
+                                <div class="bl-card-body">
+                                    <div class="bl-card-meta">
+                                        <i class="bi bi-calendar3"></i>
+                                        <?php
+                                            $months = [1=>'Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+                                            $ts = strtotime($item['created_at']);
+                                            echo date('j', $ts) . ' ' . $months[(int)date('n', $ts)] . ' ' . date('Y', $ts);
+                                        ?>
+                                        <span class="dot"></span>
+                                        <i class="bi bi-person"></i>
+                                        <?= htmlspecialchars($item['author_name'] ?? 'Admin') ?>
+                                    </div>
+                                    <div class="bl-card-title">
+                                        <a href="<?= base_url('berita/' . $item['slug']) ?>"><?= htmlspecialchars($item['title']) ?></a>
+                                    </div>
+                                    <?php if (!empty($item['content'])): ?>
+                                    <p class="bl-card-excerpt"><?= htmlspecialchars(strip_tags($item['content'])) ?></p>
+                                    <?php endif; ?>
+                                    <a href="<?= base_url('berita/' . $item['slug']) ?>" class="bl-card-btn">
+                                        BACA SELENGKAPNYA <i class="bi bi-arrow-right"></i>
+                                    </a>
                                 </div>
-                                <h3 class="news-item-title">
-                                    <a href="<?php echo base_url('berita/' . $item['slug']); ?>"><?php echo htmlspecialchars($item['title']); ?></a>
-                                </h3>
-                                <?php if (!empty($item['content'])): ?>
-                                <p class="news-card-excerpt"><?php echo htmlspecialchars(strip_tags($item['content'])); ?></p>
-                                <?php endif; ?>
-                                <a href="<?php echo base_url('berita/' . $item['slug']); ?>" class="news-card-btn">
-                                    BACA SELENGKAPNYA <i class="bi bi-arrow-right"></i>
-                                </a>
                             </div>
                         </div>
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Info halaman & Pagination -->
+                    <!-- Pagination Info + Links -->
                     <?php
                         $from = ($current_offset ?? 0) + 1;
                         $to   = min(($current_offset ?? 0) + ($per_page ?? 10), $total_news ?? count($news_items));
                     ?>
                     <?php if (!empty($total_news) && $total_news > ($per_page ?? 10)): ?>
-                    <div style="text-align:center; font-size:0.82rem; color:#888; margin-top:16px; margin-bottom:4px; font-family:'Plus Jakarta Sans',sans-serif;">
-                        Menampilkan <strong style="color:#1a2e2b;"><?= $from ?>&ndash;<?= $to ?></strong> dari <strong style="color:#1a2e2b;"><?= $total_news ?></strong> berita
+                    <div class="bl-page-info mt-4">
+                        Menampilkan <strong><?= $from ?>&ndash;<?= $to ?></strong> dari <strong><?= $total_news ?></strong> berita
                     </div>
                     <?php endif; ?>
                     <?php if (!empty($pagination_links)): ?>
@@ -361,36 +403,36 @@
                     <?php endif; ?>
 
                 <?php else: ?>
-                    <div class="empty-state">
+                    <div class="bl-empty">
                         <i class="bi bi-newspaper"></i>
-                        <h4 style="color: #555; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;">Belum Ada Berita</h4>
-                        <p style="font-size: 0.9rem;">Belum ada berita yang dipublikasikan saat ini.</p>
+                        <h4>Belum Ada Berita</h4>
+                        <p style="font-size:0.85rem;">Belum ada berita yang dipublikasikan saat ini.</p>
                     </div>
                 <?php endif; ?>
             </div>
 
             <!-- Kanan: Sidebar Berita Lainnya -->
             <div class="col-lg-4">
-                <div class="sidebar-other-news">
-                    <div class="sidebar-title">
-                        <i class="bi bi-newspaper" style="color: #2E564F;"></i>
+                <div class="bl-sidebar">
+                    <div class="bl-sidebar-title">
+                        <i class="bi bi-newspaper" style="color: var(--bl-teal);"></i>
                         Berita Lainnya
                     </div>
 
                     <?php if (!empty($other_news)): ?>
-                        <div class="sidebar-berita-box">
+                        <div class="bl-sidebar-box">
                             <?php foreach ($other_news as $on): ?>
-                            <a href="<?= base_url('berita/' . $on['slug']) ?>" class="sidebar-berita-item">
-                                <div class="thumb">
+                            <a href="<?= base_url('berita/' . $on['slug']) ?>" class="bl-sidebar-item">
+                                <div class="sthumb">
                                     <?php if (!empty($on['thumbnail']) && file_exists('./' . $on['thumbnail'])): ?>
                                         <img src="<?= base_url($on['thumbnail']) ?>" alt="<?= htmlspecialchars($on['title']) ?>">
                                     <?php else: ?>
-                                        <div class="no-img"><i class="bi bi-image"></i></div>
+                                        <i class="bi bi-image" style="color: rgba(55,124,128,0.5); font-size:1.3rem;"></i>
                                     <?php endif; ?>
                                 </div>
-                                <div class="info">
-                                    <div class="on-title"><?= htmlspecialchars($on['title']) ?></div>
-                                    <div class="on-date">
+                                <div class="sinfo">
+                                    <div class="stitle"><?= htmlspecialchars($on['title']) ?></div>
+                                    <div class="sdate">
                                         <i class="bi bi-calendar3"></i>
                                         <?php
                                             $months_s = [1=>'Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
@@ -403,8 +445,8 @@
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <div class="sidebar-berita-box" style="text-align:center; color:#aaa; font-size: 0.85rem;">
-                            <i class="bi bi-newspaper" style="font-size: 2rem; display:block; margin-bottom:10px;"></i>
+                        <div class="bl-sidebar-box" style="text-align:center; color:rgba(177,205,206,0.45); font-size:0.82rem; padding: 30px 18px;">
+                            <i class="bi bi-newspaper" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
                             Belum ada berita lain.
                         </div>
                     <?php endif; ?>

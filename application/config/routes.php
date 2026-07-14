@@ -61,5 +61,7 @@ $route['admin']                     = 'admin/index';
 $route['berita']                    = 'home/berita';
 $route['berita/(:num)']             = 'home/berita';        // pagination offset
 $route['berita/(:any)']             = 'home/berita_detail/$1';
+$route['profile']                   = 'Profile/index';
+$route['profile/update']            = 'Profile/update';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
