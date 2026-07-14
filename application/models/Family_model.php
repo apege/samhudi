@@ -11,10 +11,11 @@ class Family_model extends CI_Model {
     public function get_family_tree($rootId = null, $familyId = null)
     {
         if ($rootId) {
-            $root = $this->db->get_where('family_members', ['id' => (int) $rootId])->row_array();
+            $root = $this->db->get_where('family_members', ['id' => (int) $rootId, 'status' => 'approved'])->row_array();
         } else {
             $this->db->where('father_id', NULL);
             $this->db->where('mother_id', NULL);
+            $this->db->where('status', 'approved');
             if ($familyId) $this->db->where('family_id', (int) $familyId);
             $this->db->order_by('birth_date', 'ASC');
             $this->db->order_by('id', 'ASC');
@@ -29,10 +30,13 @@ class Family_model extends CI_Model {
         return $this->fetch_node($root, 0);
     }
 
-    public function get_member_full_details($id)
+    public function get_member_full_details($id, $bypass_status = false)
     {
         $id = (int)$id;
         $this->db->where('id', $id);
+        if (!$bypass_status) {
+            $this->db->where('status', 'approved');
+        }
         $memberRow = $this->db->get('family_members')->row_array();
         
         if (!$memberRow) return null;
@@ -41,8 +45,8 @@ class Family_model extends CI_Model {
         $member['agama'] = $memberRow['religion'] ?? 'Islam'; // Defaulting if column doesn't exist, maybe assume Islam or leave empty if not present. I'll check if religion exists, if not just don't output or output what's there. Actually let's just use what's in DB or hardcode standard if needed. Let's just add it manually if it doesn't exist.
         
         // Data Orang Tua
-        $ayahRow = $memberRow['father_id'] ? $this->db->get_where('family_members', ['id' => $memberRow['father_id']])->row_array() : null;
-        $ibuRow = $memberRow['mother_id'] ? $this->db->get_where('family_members', ['id' => $memberRow['mother_id']])->row_array() : null;
+        $ayahRow = $memberRow['father_id'] ? $this->db->get_where('family_members', ['id' => $memberRow['father_id'], 'status' => 'approved'])->row_array() : null;
+        $ibuRow = $memberRow['mother_id'] ? $this->db->get_where('family_members', ['id' => $memberRow['mother_id'], 'status' => 'approved'])->row_array() : null;
         
         $member['ayah_name'] = $ayahRow['full_name'] ?? '-';
         $member['ibu_name'] = $ibuRow['full_name'] ?? '-';
@@ -91,6 +95,7 @@ class Family_model extends CI_Model {
             $this->db->or_where_in('mother_id', $spouseIds);
         }
         $this->db->group_end();
+        $this->db->where('status', 'approved');
         
         $this->db->order_by('birth_date', 'ASC');
         $this->db->order_by('id', 'ASC');
@@ -114,6 +119,7 @@ class Family_model extends CI_Model {
             if ($memberRow['father_id']) $this->db->where('father_id', $memberRow['father_id']);
             if ($memberRow['mother_id']) $this->db->or_where('mother_id', $memberRow['mother_id']);
             $this->db->group_end();
+            $this->db->where('status', 'approved');
             $this->db->order_by('birth_date', 'ASC');
             $this->db->order_by('id', 'ASC');
             
@@ -159,8 +165,11 @@ class Family_model extends CI_Model {
             }
         }
 
+        $this->db->group_start();
         $this->db->where('father_id', $row['id']);
         $this->db->or_where('mother_id', $row['id']);
+        $this->db->group_end();
+        $this->db->where('status', 'approved');
         $this->db->order_by('birth_date', 'ASC');
         $this->db->order_by('id', 'ASC');
         $children = $this->db->get('family_members')->result_array();
@@ -181,7 +190,7 @@ class Family_model extends CI_Model {
         $spouses = [];
         foreach ($marriages as $marriage) {
             $spouseId = ($marriage['husband_id'] == $memberId) ? $marriage['wife_id'] : $marriage['husband_id'];
-            $spouse = $this->db->get_where('family_members', ['id' => $spouseId])->row_array();
+            $spouse = $this->db->get_where('family_members', ['id' => $spouseId, 'status' => 'approved'])->row_array();
             if ($spouse) $spouses[] = $spouse;
         }
         return $spouses;

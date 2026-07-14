@@ -3,10 +3,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $current_page = isset($active_menu) ? $active_menu : ($this->uri->segment(2) ? $this->uri->segment(2) : $this->uri->segment(1));
 ?>
 <!-- ================= SIDEBAR ================= -->
-<aside class="w-72 bg-brand-dark border-r border-brand-medium/30 flex flex-col shrink-0 sticky top-0 h-screen">
+<aside id="adminSidebar" class="w-72 bg-brand-dark border-r border-brand-medium/30 flex flex-col shrink-0 fixed inset-y-0 left-0 z-50 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 h-screen">
     
+    <button onclick="document.getElementById('adminSidebar').classList.add('-translate-x-full');" class="md:hidden absolute top-4 right-4 text-white/50 hover:text-white">
+        <i class="bi bi-x-lg text-xl"></i>
+    </button>
     <!-- Profile Section -->
-    <div class="p-6 border-b border-brand-medium/30 flex items-center gap-4">
+    <div class="p-6 border-b border-brand-medium/30 flex items-center gap-4 mt-6 md:mt-0">
         <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-medium to-brand-dark flex items-center justify-center text-white font-bold text-xl border border-brand-medium shadow-sm">
             <?= strtoupper(substr($admin_name ?? 'A', 0, 1)) ?>
         </div>

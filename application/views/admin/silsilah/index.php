@@ -61,7 +61,7 @@
         <?php $this->load->view('admin/header'); ?>
 
         <!-- Content Area -->
-        <div class="p-8 space-y-8">
+        <div class="p-4 md:p-8 space-y-8">
             
             <!-- Toast Alert for success/error messages -->
             <?php if ($this->session->flashdata('success')): ?>
@@ -77,7 +77,7 @@
                     <h2 class="font-display font-extrabold text-2xl text-white">Kelola Silsilah Keluarga</h2>
                     <p class="text-brand-light/70 text-xs mt-1">Daftar anggota keluarga besar H.M Samhudi beserta relasi silsilah.</p>
                 </div>
-                <a href="<?= base_url('admin/silsilah_add') ?>" class="flex items-center justify-center gap-2 bg-gradient-to-r from-brand-medium to-brand-dark hover:from-brand-medium/90 hover:to-brand-dark/90 border border-brand-medium text-white px-5 py-3 rounded-xl text-sm font-bold shadow-md transition-all">
+                <a href="<?= base_url('admin/silsilah_add') ?>" class="flex items-center justify-center gap-2 bg-gradient-to-r from-brand-medium to-brand-dark hover:from-brand-medium/90 hover:to-brand-dark/90 border border-brand-medium text-white px-5 py-3 rounded-xl text-sm font-bold shadow-md transition-all w-full md:w-auto">
                     <i class="bi bi-person-plus-fill"></i>
                     <span>Tambah Anggota</span>
                 </a>
@@ -85,7 +85,7 @@
 
             <!-- Filters & Search -->
             <div class="bg-brand-dark/20 border border-brand-medium/20 rounded-2xl p-6 shadow-sm">
-                <form method="GET" action="<?= base_url('admin/silsilah') ?>" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <form method="GET" action="<?= base_url('admin/silsilah') ?>" class="grid grid-cols-1 md:grid-cols-6 gap-4">
                     
                     <!-- Search Input -->
                     <div class="relative md:col-span-2">
@@ -112,6 +112,16 @@
                         </select>
                     </div>
 
+                    <!-- Persetujuan Filter -->
+                    <div>
+                        <select name="status" class="w-full bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-brand-medium transition-all">
+                            <option value="">Semua Status</option>
+                            <option value="pending" <?= ($status ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
+                            <option value="approved" <?= ($status ?? '') === 'approved' ? 'selected' : '' ?>>Approved</option>
+                            <option value="rejected" <?= ($status ?? '') === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+                        </select>
+                    </div>
+
                     <!-- Status Filter -->
                     <div class="flex gap-2">
                         <select name="is_alive" class="flex-1 bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-brand-medium transition-all">
@@ -133,13 +143,14 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b border-[#4D6B67]/20">
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Anggota</th>
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">L/P</th>
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Generasi</th>
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Orang Tua</th>
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Kontak / TTL</th>
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider">Status</th>
-                                <th class="pb-4 text-xs font-bold text-white/40 uppercase tracking-wider text-right">Aksi</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Anggota</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">L/P</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Generasi</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Orang Tua</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Kontak / TTL</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Persetujuan</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Status Hidup</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#4D6B67]/10">
@@ -147,7 +158,7 @@
                                 <?php foreach ($members as $member): ?>
                                     <tr>
                                         <!-- Photo & Name -->
-                                        <td class="py-4 flex items-center gap-3">
+                                        <td class="py-4 px-4 whitespace-nowrap flex items-center gap-3">
                                             <?php if ($member['photo'] && file_exists('./' . $member['photo'])): ?>
                                                 <img src="<?= base_url($member['photo']) ?>" alt="<?= htmlspecialchars($member['full_name']) ?>" class="w-10 h-10 rounded-full object-cover border border-[#4D6B67]/30">
                                             <?php else: ?>
@@ -162,19 +173,19 @@
                                         </td>
                                         
                                         <!-- Gender -->
-                                        <td class="py-4 text-sm">
+                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
                                             <span class="px-2 py-1 rounded text-xs font-bold <?= $member['gender'] == 'L' ? 'bg-blue-500/20 text-blue-300' : 'bg-pink-500/20 text-pink-300' ?>">
                                                 <?= $member['gender'] == 'L' ? 'L' : 'P' ?>
                                             </span>
                                         </td>
 
                                         <!-- Generasi -->
-                                        <td class="py-4 text-sm text-brand-light">
+                                        <td class="py-4 px-4 whitespace-nowrap text-sm text-brand-light">
                                             Gen-<?= $member['generasi'] ?? '-' ?>
                                         </td>
 
                                         <!-- Parents -->
-                                        <td class="py-4 text-sm">
+                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
                                             <div class="text-xs text-white/80">
                                                 <strong>Ayah:</strong> <?= htmlspecialchars($member['father_name'] ?: '-') ?><br>
                                                 <strong>Ibu:</strong> <?= htmlspecialchars($member['mother_name'] ?: '-') ?>
@@ -182,15 +193,28 @@
                                         </td>
 
                                         <!-- Contact / TTL -->
-                                        <td class="py-4 text-sm">
+                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
                                             <div class="text-xs text-white/80">
                                                 <i class="bi bi-geo-alt-fill text-white/40"></i> <?= htmlspecialchars($member['birth_place'] ?: '-') ?>, <?= $member['birth_date'] ? date('j M Y', strtotime($member['birth_date'])) : '-' ?><br>
                                                 <i class="bi bi-telephone-fill text-white/40"></i> <?= htmlspecialchars($member['phone'] ?: '-') ?>
                                             </div>
                                         </td>
 
+                                        <!-- Persetujuan -->
+                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
+                                            <?php if ($member['status'] == 'approved'): ?>
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Approved</span>
+                                            <?php elseif ($member['status'] == 'rejected'): ?>
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/30">Rejected</span>
+                                            <?php else: ?>
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 flex items-center w-max gap-1">
+                                                    <i class="bi bi-hourglass-split"></i> Pending
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+
                                         <!-- Status Hidup / Wafat -->
-                                        <td class="py-4 text-sm">
+                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
                                             <?php if ($member['is_alive'] == 1): ?>
                                                 <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Hidup</span>
                                             <?php else: ?>
@@ -199,8 +223,17 @@
                                         </td>
 
                                         <!-- Actions -->
-                                        <td class="py-4 text-right space-x-2">
-                                            <a href="<?= base_url('admin/silsilah_edit/' . $member['id']) ?>" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black border border-yellow-500/20 transition-all">
+                                        <td class="py-4 px-4 text-right space-x-2 whitespace-nowrap">
+                                            <?php if ($member['status'] == 'pending'): ?>
+                                                <a href="<?= base_url('admin/silsilah_approve/' . $member['id']) ?>" onclick="return confirm('Setujui anggota ini untuk tampil di silsilah keluarga?')" class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 transition-all text-xs font-bold">
+                                                    <i class="bi bi-check-lg mr-1"></i> Terima
+                                                </a>
+                                                <a href="<?= base_url('admin/silsilah_reject/' . $member['id']) ?>" onclick="return confirm('Tolak pendaftaran anggota ini?')" class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all text-xs font-bold">
+                                                    <i class="bi bi-x-lg mr-1"></i> Tolak
+                                                </a>
+                                            <?php endif; ?>
+                                            
+                                            <a href="<?= base_url('admin/silsilah_edit/' . $member['id']) ?>" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black border border-yellow-500/20 transition-all" title="Edit">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
                                             <a href="<?= base_url('admin/silsilah_delete/' . $member['id']) ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus anggota ini? Data relasi silsilah anak juga akan terputus.')" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-brand-red/10 text-brand-red hover:bg-brand-red hover:text-white border border-brand-red/20 transition-all">

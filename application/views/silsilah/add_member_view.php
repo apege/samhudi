@@ -92,7 +92,11 @@
         
         <div class="form-group">
             <label>Nama Lengkap</label>
-            <input type="text" id="fullName" placeholder="Masukkan nama lengkap" oninput="checkForm3()">
+            <?php 
+                $signup_basic = $this->session->userdata('signup_basic_info');
+                $default_name = !empty($signup_basic) ? $signup_basic['full_name'] : (isset($pending_user) ? $pending_user->full_name : '');
+            ?>
+            <input type="text" id="fullName" placeholder="Masukkan nama lengkap" value="<?= htmlspecialchars($default_name) ?>" oninput="checkForm3()">
         </div>
         
         <div class="form-group">
@@ -119,10 +123,10 @@
         </div>
     </div>
 
-    <!-- Step 4: Berhasil -->
+    <!-- Step 4: Menunggu Persetujuan (Terakhir) -->
     <div class="wizard-step" id="step4">
         <div style="text-align: center; padding: 20px 0;">
-            <h2 style="font-size: 24px; font-weight: 700; color: var(--ink); margin-bottom: 20px;">Berhasil</h2>
+            <h2 style="font-size: 24px; font-weight: 700; color: var(--ink); margin-bottom: 20px;">Menunggu Persetujuan</h2>
             
             <div class="success-avatar-wrapper">
                 <img src="" id="successPhoto" alt="" class="success-avatar">
@@ -131,20 +135,20 @@
             <div style="width: 40px; height: 2px; background-color: var(--forest-deep); margin: 25px auto; border-radius: 2px; opacity: 0.5;"></div>
             
             <p style="font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 5px;">
-                Selamat, <span id="successName"></span>
+                Halo, <span id="successName"></span>
             </p>
             <p style="font-size: 14px; color: #4A6055; margin-bottom: 30px;">
-                Kamu telah bergabung dalam<br>keluarga H.M Samhudi
+                Data kamu berhasil dikirim dan sedang<br>menunggu persetujuan Admin untuk bergabung.
             </p>
 
-            <button class="btn-primary" style="width: 100%;" onclick="loadMiniTree()">Lanjut <i class="bi bi-chevron-right"></i></button>
+            <button class="btn-primary" style="width: 100%;" onclick="finishWizard()">Selesai <i class="bi bi-check2-circle"></i></button>
         </div>
     </div>
 
     <!-- Step 5: Posisi Keluarga Inti -->
     <div class="wizard-step" id="step5">
         <div style="text-align: center; margin-bottom: 30px;">
-            <h2 style="font-size: 20px; font-weight: 700; color: var(--ink); margin: 0;">Data Berhasil disimpan</h2>
+            <h2 style="font-size: 20px; font-weight: 700; color: var(--ink); margin: 0;">Posisi Keluarga Inti</h2>
             <p style="font-size: 13px; color: var(--text-muted); margin-top: 5px;">Berikut adalah posisi Anda dalam keluarga inti</p>
         </div>
 
@@ -195,7 +199,7 @@
         </div>
 
         <div class="step-footer" style="margin-top: 40px;">
-            <button class="btn-primary" style="width: 100%;" onclick="finishWizard()">Selesai <i class="bi bi-chevron-right"></i></button>
+            <button class="btn-primary" style="width: 100%;" onclick="goToFinalStep()">Lanjut <i class="bi bi-chevron-right"></i></button>
         </div>
     </div>
 
@@ -203,9 +207,10 @@
 </div>
 
 <script>
+    const isSignupFlow = <?php echo $this->session->userdata('signup_basic_info') ? 'true' : 'false'; ?>;
     const searchApiUrl = "<?php echo site_url('familytree/api_search_members'); ?>";
-    const saveApiUrl = "<?php echo site_url('familytree/api_save_member'); ?>";
+    const saveApiUrl = isSignupFlow ? "<?php echo site_url('auth/api_save_member_temp'); ?>" : "<?php echo site_url('familytree/api_save_member'); ?>";
     const baseTreeUrl = "<?php echo site_url('familytree'); ?>";
-    const detailApiUrl = "<?php echo site_url('familytree/get_member_detail'); ?>";
+    const detailApiUrl = isSignupFlow ? "<?php echo site_url('auth/get_member_detail_temp'); ?>" : "<?php echo site_url('familytree/get_member_detail'); ?>";
 </script>
 <script src="<?php echo base_url('assets/js/wizard.js?v=' . time()); ?>"></script>

@@ -203,7 +203,8 @@ function submitForm() {
             document.getElementById('successPhoto').src = previewPhoto;
 
             document.getElementById('step3').style.display = 'none';
-            document.getElementById('step4').style.display = 'block';
+            document.getElementById('step5').style.display = 'block';
+            loadMiniTree();
         } else {
             errorMsg.innerText = data.message;
             errorMsg.style.display = 'block';
@@ -220,12 +221,9 @@ function submitForm() {
 }
 
 function loadMiniTree() {
-    document.getElementById('step4').style.display = 'none';
-    document.getElementById('step5').style.display = 'block';
-
     if (!newMemberId) return;
 
-    fetch(detailApiUrl + '?id=' + newMemberId)
+    fetch(detailApiUrl + '?id=' + newMemberId + '&preview=1')
     .then(res => res.json())
     .then(data => {
         // Anda
@@ -293,6 +291,15 @@ function loadMiniTree() {
     });
 }
 
+function goToFinalStep() {
+    document.getElementById('step5').style.display = 'none';
+    document.getElementById('step4').style.display = 'block';
+}
+
 function finishWizard() {
-    window.location.href = baseTreeUrl;
+    if (typeof isSignupFlow !== 'undefined' && isSignupFlow) {
+        window.location.href = baseTreeUrl.replace('/familytree', '/auth/trigger_otp');
+    } else {
+        window.location.href = baseTreeUrl;
+    }
 }

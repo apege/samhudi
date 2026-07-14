@@ -28,7 +28,8 @@ class Familytree extends CI_Controller
             return;
         }
 
-        $data = $this->Family_model->get_member_full_details($id);
+        $bypass = $this->input->get('preview') == 1;
+        $data = $this->Family_model->get_member_full_details($id, $bypass);
 
         if (!$data) {
             echo json_encode(['error' => 'Data tidak ditemukan']);
@@ -79,13 +80,28 @@ class Familytree extends CI_Controller
         $role = $this->input->post('role'); // 'anak', 'pasangan', 'orangtua'
         $rel_id = $this->input->post('rel_id'); // ID dari anggota yang dipilih
         
+        $this->load->library('session');
+        $pending_user_id = $this->session->userdata('pending_user_id');
+
         $data = [
             'full_name' => $this->input->post('full_name'),
             'birth_date' => $this->input->post('birth_date'),
             'gender' => $this->input->post('gender'), // 'L' atau 'P'
-            // Default stat
-            'is_alive' => 1
+            'is_alive' => 1,
+            'status' => 'pending'
         ];
+
+        if ($pending_user_id) {
+            $data['user_id'] = $pending_user_id;
+            
+            // Auto fill phone and email from the users record
+            $this->load->model('User_model');
+            $pending_user = $this->User_model->get_by_id($pending_user_id);
+            if ($pending_user) {
+                $data['phone'] = $pending_user->phone;
+                $data['email'] = $pending_user->email;
+            }
+        }
         
         if (empty($role) || empty($rel_id) || empty($data['full_name']) || empty($data['gender'])) {
             echo json_encode(['status' => false, 'message' => 'Data tidak lengkap.']);
@@ -110,6 +126,7 @@ class Familytree extends CI_Controller
         $result = $this->Family_model->insert_new_member($data, $role, $rel_id);
         
         if ($result['status']) {
+            $result['message'] = 'Data berhasil dikirim dan sedang menunggu persetujuan Admin.';
             $this->session->set_flashdata('success', $result['message']);
         }
         
