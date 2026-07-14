@@ -2,13 +2,13 @@
         <div class="container">
             <div class="row align-items-center justify-content-center">
 
-                <div class="col-lg-7 position-relative">
+                <div class="col-lg-7 position-relative reveal reveal-slide-right">
                     <img src="<?= base_url('assets/images/sambutannew.png') ?>" alt="Keluarga H.M Samhudi" class="img-fluid overlap-img">
                     <div class="overlap-ornament"></div>
                 </div>
 
                 <div class="col-lg-5">
-                    <div class="overlap-box">
+                    <div class="overlap-box reveal reveal-slide-left delay-200">
                         <div class="overlap-content">
                             <p class="overlap-text">
                                 Dengan rasa syukur dan bangga,
