@@ -67,12 +67,12 @@
         <?php $this->load->view('admin/header'); ?>
 
         <!-- Body / Dashboard Content -->
-        <div class="p-8 space-y-8">
+        <div class="p-4 md:p-8 space-y-8">
 
             <!-- Welcome Message Widget -->
-            <div class="relative overflow-hidden bg-gradient-to-r from-teal-900 to-teal-800 border border-teal-800 rounded-2xl p-8 flex items-center justify-between shadow-lg">
+            <div class="relative overflow-hidden bg-gradient-to-r from-teal-900 to-teal-800 border border-teal-800 rounded-2xl p-6 md:p-8 flex items-center justify-between shadow-lg">
                 <div class="space-y-2 z-10">
-                    <h2 class="font-display font-extrabold text-2xl text-white">Halo, <?= htmlspecialchars($admin_name) ?>!</h2>
+                    <h2 class="font-display font-extrabold text-xl md:text-2xl text-white">Halo, <?= htmlspecialchars($admin_name) ?>!</h2>
                     <p class="text-teal-300 text-sm max-w-xl">Halaman ini digunakan untuk mengelola data silsilah keluarga besar, persetujuan forum diskusi, publikasi berita terbaru, penginputan data yayasan, dan pengelolaan data wasiat.</p>
                 </div>
                 <i class="bi bi-shield-lock-fill text-8xl text-teal-700/20 absolute right-8 bottom-0"></i>

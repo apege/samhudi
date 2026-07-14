@@ -61,7 +61,7 @@
         <?php $this->load->view('admin/header'); ?>
 
         <!-- Content Area -->
-        <div class="p-8 space-y-8">
+        <div class="p-4 md:p-8 space-y-8">
             
             <!-- Toast Alert for success/error messages -->
             <?php if ($this->session->flashdata('success')): ?>
@@ -77,7 +77,7 @@
                     <h2 class="font-display font-extrabold text-2xl text-white">Kelola Silsilah Keluarga</h2>
                     <p class="text-brand-light/70 text-xs mt-1">Daftar anggota keluarga besar H.M Samhudi beserta relasi silsilah.</p>
                 </div>
-                <a href="<?= base_url('admin/silsilah_add') ?>" class="flex items-center justify-center gap-2 bg-gradient-to-r from-brand-medium to-brand-dark hover:from-brand-medium/90 hover:to-brand-dark/90 border border-brand-medium text-white px-5 py-3 rounded-xl text-sm font-bold shadow-md transition-all">
+                <a href="<?= base_url('admin/silsilah_add') ?>" class="flex items-center justify-center gap-2 bg-gradient-to-r from-brand-medium to-brand-dark hover:from-brand-medium/90 hover:to-brand-dark/90 border border-brand-medium text-white px-5 py-3 rounded-xl text-sm font-bold shadow-md transition-all w-full md:w-auto">
                     <i class="bi bi-person-plus-fill"></i>
                     <span>Tambah Anggota</span>
                 </a>
