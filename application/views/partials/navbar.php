@@ -64,7 +64,7 @@
                         Dashboard
                     </a>
                     <?php endif; ?>
-                    <a href="<?= base_url('#') ?>" class="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-display font-medium no-underline">
+                    <a href="<?= base_url('profile') ?>" class="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-display font-medium no-underline">
                         <i class="bi bi-pencil-square text-teal-700"></i>
                         Edit Profil
                     </a>

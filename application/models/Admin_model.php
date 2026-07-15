@@ -298,5 +298,60 @@ class Admin_model extends CI_Model
     {
         return $this->db->where('status', 'publish')->count_all_results('news');
     }
+
+    /**
+     * Berita paling banyak dilihat (untuk sidebar profile)
+     */
+    public function get_most_viewed_news($limit = 5)
+    {
+        $this->db->select('news.*, users.full_name AS author_name');
+        $this->db->from('news');
+        $this->db->join('users', 'users.id = news.author_id', 'left');
+        $this->db->where('news.status', 'publish');
+        $this->db->order_by('news.views', 'DESC');
+        $this->db->limit($limit);
+        return $this->db->get()->result_array();
+    }
+
+    /**
+     * Berita yang di-like user (dari tabel news_likes)
+     */
+    public function get_user_news_likes($user_id, $limit = 20)
+    {
+        $this->db->select('news.*, users.full_name AS author_name');
+        $this->db->from('news_likes');
+        $this->db->join('news', 'news.id = news_likes.news_id', 'left');
+        $this->db->join('users', 'users.id = news.author_id', 'left');
+        $this->db->where('news_likes.user_id', $user_id);
+        $this->db->where('news.status', 'publish');
+        $this->db->order_by('news_likes.created_at', 'DESC');
+        $this->db->limit($limit);
+        return $this->db->get()->result_array();
+    }
+
+    /**
+     * Toggle like berita per-user (untuk news_likes table)
+     */
+    public function toggle_news_like($news_id, $user_id)
+    {
+        $check = $this->db->get_where('news_likes', ['news_id' => $news_id, 'user_id' => $user_id])->row();
+        if ($check) {
+            $this->db->delete('news_likes', ['news_id' => $news_id, 'user_id' => $user_id]);
+            $this->decrement_news_likes($news_id);
+            return 'unlike';
+        } else {
+            $this->db->insert('news_likes', ['news_id' => $news_id, 'user_id' => $user_id]);
+            $this->increment_news_likes($news_id);
+            return 'like';
+        }
+    }
+
+    /**
+     * Cek apakah user sudah like berita
+     */
+    public function user_liked_news($news_id, $user_id)
+    {
+        return (bool) $this->db->get_where('news_likes', ['news_id' => $news_id, 'user_id' => $user_id])->row();
+    }
 }
 

@@ -115,8 +115,20 @@ class Home extends CI_Controller {
 
         $other_news = $this->Admin_model->get_other_news($news['id'], 4);
 
+        // Check if logged-in user has liked this news
+        $user_id = $this->session->userdata('user_id');
+        $is_liked = false;
+        if ($user_id) {
+            $liked_row = $this->db->get_where('news_likes', [
+                'news_id' => $news['id'],
+                'user_id' => $user_id
+            ])->row();
+            $is_liked = !empty($liked_row);
+        }
+
         $data['news']       = $news;
         $data['other_news'] = $other_news;
+        $data['is_liked']   = $is_liked;
 
         $this->load->view('templates/header');
         $this->load->view('partials/navbar');
@@ -133,19 +145,26 @@ class Home extends CI_Controller {
             show_404();
             return;
         }
-        
-        $action = $this->input->post('action'); // 'like' or 'unlike'
-        
-        if ($action === 'unlike') {
-            $this->Admin_model->decrement_news_likes($id);
-        } else {
-            $this->Admin_model->increment_news_likes($id);
+
+        $user_id = $this->session->userdata('user_id');
+        if (!$user_id) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Login required']));
+            return;
         }
-        
+
+        // Use toggle_news_like which properly inserts/deletes from news_likes table
+        $result = $this->Admin_model->toggle_news_like($id, $user_id);
+
         $news = $this->Admin_model->get_news_by_id($id);
-        
+
         $this->output
             ->set_content_type('application/json')
-            ->set_output(json_encode(['status' => 'success', 'likes' => $news['likes']]));
+            ->set_output(json_encode([
+                'status' => 'success',
+                'action' => $result, // 'like' or 'unlike'
+                'likes'  => $news['likes']
+            ]));
     }
 }

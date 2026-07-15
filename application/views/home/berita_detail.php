@@ -391,39 +391,44 @@ if (!function_exists('fmt_date_detail')) {
 </div>
 
 <script>
+// Initialize like state from server (DB-driven, not localStorage)
+var isLiked = <?= $is_liked ? 'true' : 'false' ?>;
+
 document.addEventListener('DOMContentLoaded', function() {
-    if(localStorage.getItem('liked_news_<?= $news['id'] ?>')) {
-        document.getElementById('like-icon').style.color = '#dc3545'; // Merah
-    }
+    updateLikeIcon(isLiked);
 });
 
+function updateLikeIcon(liked) {
+    var icon = document.getElementById('like-icon');
+    if (icon) {
+        icon.style.color = liked ? '#dc3545' : '#aaa';
+        icon.className = liked ? 'bi bi-heart-fill' : 'bi bi-heart';
+    }
+}
+
 function likeBerita(id) {
-    const isLiked = localStorage.getItem('liked_news_' + id);
-    const action = isLiked ? 'unlike' : 'like';
-    
-    let formData = new FormData();
-    formData.append('action', action);
+    <?php if (!$this->session->userdata('user_id')): ?>
+        alert('Anda harus login untuk menyukai berita.');
+        return;
+    <?php endif; ?>
 
     fetch('<?= base_url('home/like_berita/') ?>' + id, {
         method: 'POST',
-        body: formData
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(res => res.json())
     .then(data => {
-        if(data.status === 'success') {
+        if (data.status === 'success') {
+            isLiked = (data.action === 'like');
+            updateLikeIcon(isLiked);
             document.getElementById('like-count').innerText = data.likes + ' Suka';
-            
-            if (action === 'like') {
-                localStorage.setItem('liked_news_' + id, 'true');
-                document.getElementById('like-icon').style.color = '#dc3545'; // Merah
-            } else {
-                localStorage.removeItem('liked_news_' + id);
-                document.getElementById('like-icon').style.color = '#ccc'; // Abu-abu
-            }
+        } else if (data.status === 'error') {
+            alert(data.message || 'Terjadi kesalahan.');
         }
     })
-    .catch(err => console.error(err));
+    .catch(err => console.error('Like error:', err));
 }
+
 
 function shareBerita() {
     if (navigator.share) {

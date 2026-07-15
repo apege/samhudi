@@ -614,6 +614,72 @@ class Admin extends CI_Controller
         redirect('admin/berita');
     }
 
+    // ================= KELOLA BANNER PROFIL =================
+    public function banner_profil()
+    {
+        $data = [
+            'admin_name' => $this->session->userdata('full_name'),
+            'admin_role' => $this->session->userdata('role'),
+            'banners'    => $this->db->order_by('created_at', 'DESC')->get('profile_banners')->result_array()
+        ];
+        $this->load->view('admin/banner_profil/index', $data);
+    }
+
+    public function banner_profil_add()
+    {
+        if ($this->input->method() == 'post') {
+            if (!empty($_FILES['banner_file']['name'])) {
+                $config['upload_path']   = './assets/uploads/banners/';
+                $config['allowed_types'] = 'gif|jpg|jpeg|png|webp';
+                $config['max_size']      = 5120; // 5MB
+                $config['file_name']     = 'pbanner_' . time();
+
+                if (!is_dir($config['upload_path'])) {
+                    mkdir($config['upload_path'], 0777, true);
+                }
+
+                $this->load->library('upload');
+                $this->upload->initialize($config);
+
+                if ($this->upload->do_upload('banner_file')) {
+                    $upload_data = $this->upload->data();
+                    $image_path  = 'assets/uploads/banners/' . $upload_data['file_name'];
+                    
+                    $this->db->insert('profile_banners', ['image_path' => $image_path]);
+                    $this->session->set_flashdata('success', 'Banner berhasil ditambahkan.');
+                    redirect('admin/banner_profil');
+                } else {
+                    $this->session->set_flashdata('error', $this->upload->display_errors('', ''));
+                    redirect('admin/banner_profil_add');
+                }
+            } else {
+                $this->session->set_flashdata('error', 'Silakan pilih gambar.');
+                redirect('admin/banner_profil_add');
+            }
+        } else {
+            $data = [
+                'admin_name' => $this->session->userdata('full_name'),
+                'admin_role' => $this->session->userdata('role')
+            ];
+            $this->load->view('admin/banner_profil/add', $data);
+        }
+    }
+
+    public function banner_profil_delete($id)
+    {
+        $banner = $this->db->get_where('profile_banners', ['id' => $id])->row_array();
+        if ($banner) {
+            if (file_exists('./' . $banner['image_path'])) {
+                unlink('./' . $banner['image_path']);
+            }
+            $this->db->delete('profile_banners', ['id' => $id]);
+            $this->session->set_flashdata('success', 'Banner berhasil dihapus.');
+        } else {
+            $this->session->set_flashdata('error', 'Banner tidak ditemukan.');
+        }
+        redirect('admin/banner_profil');
+    }
+
     // --- MANAJEMEN SILSILAH LAMA ---
     public function kelola_silsilah()
     {

@@ -92,6 +92,14 @@
                                 <i class="bi bi-bookmark-fill text-[#E49438] text-xl"></i> Simpan
                             </a>
                         </li>
+                        <li>
+                            <a href="<?= base_url('profile') ?>" class="nav-sidebar-link flex items-center gap-4 py-2.5 px-4 rounded-xl transition-all text-[#B1CDCE] hover:text-white hover:bg-[#374D49]/40">
+                                <div class="w-6 h-6 rounded-full overflow-hidden bg-teal-800 flex-shrink-0">
+                                    <img src="<?= !empty($user->avatar) ? base_url($user->avatar) : base_url('assets/images/photo.png') ?>" alt="Avatar" class="w-full h-full object-cover">
+                                </div>
+                                Profil Saya
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
