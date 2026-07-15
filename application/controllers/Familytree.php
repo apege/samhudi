@@ -57,11 +57,11 @@ class Familytree extends CI_Controller
     
     public function add()
     {
-        if (!$this->session->userdata('logged_in')) {
-            $this->session->set_flashdata('errors', ['Anda harus login terlebih dahulu untuk menambah anggota silsilah.']);
-            redirect('auth');
-            return;
-        }
+        // if (!$this->session->userdata('logged_in')) {
+        //     $this->session->set_flashdata('errors', ['Anda harus login terlebih dahulu untuk menambah anggota silsilah.']);
+        //     redirect('auth');
+        //     return;
+        // }
 
         $this->load->view('templates/header');
         $this->load->view('partials/navbar');
@@ -72,10 +72,10 @@ class Familytree extends CI_Controller
     public function api_search_members()
     {
         header('Content-Type: application/json; charset=utf-8');
-        if (!$this->session->userdata('logged_in')) {
-            echo json_encode([]);
-            return;
-        }
+        // if (!$this->session->userdata('logged_in')) {
+        //     echo json_encode([]);
+        //     return;
+        // }
 
         $term = $this->input->get('term');
         if (empty($term)) {
@@ -90,10 +90,10 @@ class Familytree extends CI_Controller
     {
         header('Content-Type: application/json; charset=utf-8');
         
-        if (!$this->session->userdata('logged_in')) {
-            echo json_encode(['status' => false, 'message' => 'Sesi berakhir, silakan login kembali.']);
-            return;
-        }
+        // if (!$this->session->userdata('logged_in')) {
+        //     echo json_encode(['status' => false, 'message' => 'Sesi berakhir, silakan login kembali.']);
+        //     return;
+        // }
         
         $role = $this->input->post('role'); // 'anak', 'pasangan', 'orangtua'
         $rel_id = $this->input->post('rel_id'); // ID dari anggota yang dipilih
@@ -106,7 +106,7 @@ class Familytree extends CI_Controller
             'birth_date' => $this->input->post('birth_date'),
             'gender' => $this->input->post('gender'), // 'L' atau 'P'
             'is_alive' => 1,
-            'status' => 'pending'
+            'status' => 'approved' // auto-approve
         ];
 
         if ($pending_user_id) {
