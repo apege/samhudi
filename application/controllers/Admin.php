@@ -721,4 +721,67 @@ class Admin extends CI_Controller
         echo json_encode(['status' => true, 'message' => 'Anggota dan akun penggunanya berhasil dihapus.']);
     }
 
+    // ================= KELOLA PENGGUNA =================
+
+    public function pengguna()
+    {
+        $search = $this->input->get('search') ?? '';
+        $status = $this->input->get('status') ?? '';
+        $role   = $this->input->get('role') ?? '';
+
+        $this->db->select('*');
+        $this->db->from('users');
+
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('full_name', $search);
+            $this->db->or_like('email', $search);
+            $this->db->or_like('phone', $search);
+            $this->db->group_end();
+        }
+
+        if (!empty($status)) {
+            $this->db->where('status', $status);
+        }
+
+        if (!empty($role)) {
+            $this->db->where('role', $role);
+        }
+
+        $this->db->order_by('id', 'DESC');
+        $users = $this->db->get()->result_array();
+
+        $data = [
+            'admin_name' => $this->session->userdata('full_name'),
+            'admin_role' => $this->session->userdata('role'),
+            'users'      => $users,
+            'search'     => $search,
+            'status'     => $status,
+            'role_filter'=> $role,
+            'active_menu'=> 'pengguna'
+        ];
+
+        $this->load->view('admin/pengguna', $data);
+    }
+
+    public function pengguna_approve($id)
+    {
+        $this->db->where('id', $id)->update('users', [
+            'status' => 'active',
+            'is_verified' => 1
+        ]);
+        $this->session->set_flashdata('success', 'User berhasil disetujui.');
+        redirect('admin/pengguna');
+    }
+
+    public function pengguna_delete($id)
+    {
+        // Set user_id in family_members to NULL before deleting user
+        $this->db->where('user_id', $id)->update('family_members', ['user_id' => null]);
+        $this->db->where('id', $id)->delete('users');
+
+        $this->session->set_flashdata('success', 'User berhasil dihapus.');
+        redirect('admin/pengguna');
+    }
+
 }
