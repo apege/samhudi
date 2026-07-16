@@ -225,7 +225,7 @@ class Familytree extends CI_Controller
         $result = $this->Family_model->insert_new_member($data, $role, $processed_rel_ids);
         
         if (isset($result['status']) && $result['status']) {
-            echo json_encode(['status' => true, 'message' => 'Berhasil menambahkan data keluarga.']);
+            echo json_encode(['status' => true, 'message' => 'Berhasil menambahkan data keluarga.', 'id' => $result['id'] ?? null]);
         } else {
             $msg = $result['message'] ?? 'Gagal menambahkan data, pastikan relasi valid.';
             echo json_encode(['status' => false, 'message' => $msg]);

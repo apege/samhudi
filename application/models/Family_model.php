@@ -285,7 +285,12 @@ class Family_model extends CI_Model {
             return 'https://ui-avatars.com/api/?name=' . urlencode($inisial) . '&background=CBD9CF&color=4A6055&size=100';
         }
         if (preg_match('#^https?://#i', $photo)) return $photo;
-        if (strpos($photo, '/') !== false) return base_url($photo);
+        
+        // Cek jika path sudah ada awalan 'assets'
+        if (strpos($photo, 'assets/') === 0) {
+            return base_url($photo);
+        }
+        
         return base_url('assets/uploads/' . $photo);
     }
 
