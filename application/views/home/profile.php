@@ -535,7 +535,7 @@ if (!function_exists('time_elapsed_string')) {
                         </li>
                         <li>
                             <a href="<?= base_url('linkedin') ?>" class="nav-sidebar-link flex items-center gap-4 py-2.5 px-4 rounded-xl transition-all text-[#B1CDCE] hover:text-white hover:bg-[#374D49]/40">
-                                <span style="width:20px;height:20px;background:linear-gradient(135deg,#0077b5,#00a0dc);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;font-style:italic;letter-spacing:-1px;flex-shrink:0;">in</span> linkedin
+                                <img src="<?= base_url('assets/images/3d_linkedin.png') ?>" class="w-9 h-9 object-contain" alt="Project Samhudi"> Project Samhudi
                             </a>
                         </li>
                         <li>

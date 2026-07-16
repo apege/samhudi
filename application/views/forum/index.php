@@ -304,7 +304,7 @@
                         </li>
                         <li>
                             <a href="<?= base_url('linkedin') ?>" class="nav-sidebar-link flex items-center gap-4 py-2.5 px-4 rounded-xl transition-all text-[#B1CDCE] hover:text-white hover:bg-[#374D49]/40">
-                                <i class="bi bi-linkedin text-[#0077b5] text-xl bg-white rounded flex items-center justify-center h-5 w-5 leading-none"></i> LinkedIn Alumni
+                                <img src="<?= base_url('assets/images/3d_linkedin.png') ?>" class="w-9 h-9 object-contain" alt="Project Samhudi"> Project Samhudi
                             </a>
                         </li>
                         <li>

@@ -432,7 +432,7 @@ if (!function_exists('time_elapsed_string')) {
                         </li>
                         <li>
                             <a href="<?= base_url('linkedin') ?>" class="nav-sidebar-link flex items-center gap-4 py-2.5 px-4 rounded-xl transition-all bg-[#374D49] text-white shadow-sm">
-                                <span class="ln-brand-icon">in</span> linkedin
+                                <img src="<?= base_url('assets/images/3d_linkedin.png') ?>" class="w-9 h-9 object-contain" alt="Project Samhudi"> Project Samhudi
                             </a>
                         </li>
                         <li>
