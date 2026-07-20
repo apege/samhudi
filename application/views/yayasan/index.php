@@ -1,6 +1,25 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 
 <?php
+// Define page type and theme colors
+$page_type = $page_type ?? 'individu';
+$is_rundayan = ($page_type === 'rundayan');
+$theme_primary = $is_rundayan ? 'cyan' : 'amber';
+$theme_text_primary = $is_rundayan ? 'text-cyan-400' : 'text-amber-400';
+$theme_text_bright = $is_rundayan ? 'text-cyan-300' : 'text-amber-300';
+$theme_border_hover = $is_rundayan ? 'hover:border-cyan-400/40' : 'hover:border-amber-400/40';
+$theme_bg_glow = $is_rundayan ? 'bg-cyan-500/5 group-hover:bg-cyan-500/10' : 'bg-amber-500/5 group-hover:bg-amber-500/10';
+$theme_shadow_hover = $is_rundayan ? 'hover:shadow-[0_10px_30px_rgba(6,182,212,0.3)]' : 'hover:shadow-[0_10px_30px_rgba(245,158,11,0.3)]';
+$theme_bg = $is_rundayan ? 'bg-cyan-500' : 'bg-amber-500';
+$theme_bg_hover = $is_rundayan ? 'hover:bg-cyan-600' : 'hover:bg-amber-600';
+$theme_dark_text = $is_rundayan ? 'text-slate-950' : 'text-teal-950';
+
+$section_title = $is_rundayan ? 'Pencalonan Rundayan' : 'Pencalonan Individu';
+$section_icon = $is_rundayan ? 'bi-people-fill' : 'bi-person-fill';
+$form_action_url = $is_rundayan ? base_url('rundayan/nominate') : base_url('yayasan/nominate');
+$search_action_url = $is_rundayan ? base_url('rundayan') : base_url('yayasan');
+$detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'yayasan/detail/';
+
 // Group candidates by ancestor for the chart silsilah tab
 $grouped_candidates = [];
 foreach ($candidates as $c) {
@@ -35,20 +54,26 @@ if (!function_exists('render_tree_node')) {
     function render_tree_node($cand, $children) {
         $cand_key = strtolower(trim($cand['candidate_name']));
         $has_children = isset($children[$cand_key]);
+        
+        // Resolve theme dynamically inside function
+        $page_type = isset($GLOBALS['page_type']) ? $GLOBALS['page_type'] : 'individu';
+        $is_rundayan = ($page_type === 'rundayan');
+        $theme_primary = $is_rundayan ? 'cyan' : 'amber';
+        $detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'yayasan/detail/';
         ?>
         <div class="flex flex-col gap-3">
             <!-- Candidate Node Card -->
             <div class="flex items-center gap-3">
-                <div class="w-3 h-0.5 bg-amber-500/50"></div>
-                <div class="bg-gradient-to-r from-amber-500/10 to-amber-500/0 hover:from-amber-500/20 border border-amber-500/25 rounded-2xl px-5 py-3 flex items-center justify-between gap-6 transition-all duration-300">
+                <div class="w-3 h-0.5 bg-<?= $theme_primary ?>-500/50"></div>
+                <div class="bg-gradient-to-r from-<?= $theme_primary ?>-500/10 to-<?= $theme_primary ?>-500/0 hover:from-<?= $theme_primary ?>-500/20 border border-<?= $theme_primary ?>-500/25 rounded-2xl px-5 py-3 flex items-center justify-between gap-6 transition-all duration-300">
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-amber-400 tracking-wider block mb-0.5">Kandidat Ketua</span>
+                        <span class="text-[10px] uppercase font-bold text-<?= $theme_primary ?>-400 tracking-wider block mb-0.5">Kandidat Ketua</span>
                         <strong class="text-white text-base font-semibold"><?= htmlspecialchars($cand['candidate_name']) ?></strong>
                         <?php if (!empty($cand['description'])): ?>
-                            <span class="text-xs text-white/50 block mt-1 line-clamp-1 max-w-sm"><?= htmlspecialchars($cand['description']) ?></span>
+                            <span class="text-xs text-white/55 block mt-1 line-clamp-1 max-w-sm"><?= htmlspecialchars($cand['description']) ?></span>
                         <?php endif; ?>
                     </div>
-                    <a href="<?= base_url('yayasan/detail/'.$cand['id']) ?>" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 text-white flex items-center justify-center transition-all" title="Lihat Detail & QR">
+                    <a href="<?= base_url($detail_base_url.$cand['id']) ?>" class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 text-white flex items-center justify-center transition-all" title="Lihat Detail & QR">
                         <i class="bi bi-arrow-right-short text-xl"></i>
                     </a>
                 </div>
@@ -56,7 +81,7 @@ if (!function_exists('render_tree_node')) {
             
             <!-- Recursive Children -->
             <?php if ($has_children): ?>
-                <div class="flex flex-col gap-3 pl-8 border-l border-amber-500/25 ml-[26px] pt-1">
+                <div class="flex flex-col gap-3 pl-8 border-l border-<?= $theme_primary ?>-500/25 ml-[26px] pt-1">
                     <?php foreach ($children[$cand_key] as $child): ?>
                         <?php render_tree_node($child, $children); ?>
                     <?php endforeach; ?>
@@ -69,13 +94,15 @@ if (!function_exists('render_tree_node')) {
 
 if (!function_exists('format_nominators')) {
     function format_nominators($noms) {
+        $page_type = isset($GLOBALS['page_type']) ? $GLOBALS['page_type'] : 'individu';
+        $theme_primary = $page_type === 'rundayan' ? 'cyan' : 'amber';
         if (!is_array($noms)) {
             $noms = array_filter(array_map('trim', explode(',', $noms)));
         }
         if (count($noms) <= 3) {
             return htmlspecialchars(implode(', ', $noms));
         } else {
-            return htmlspecialchars(implode(', ', array_slice($noms, 0, 3))) . ' <span class="text-amber-400 font-semibold">dan ' . (count($noms) - 3) . ' lainnya</span>';
+            return htmlspecialchars(implode(', ', array_slice($noms, 0, 3))) . ' <span class="text-' . $theme_primary . '-400 font-semibold">dan ' . (count($noms) - 3) . ' lainnya</span>';
         }
     }
 }
@@ -85,9 +112,9 @@ if (!function_exists('format_nominators')) {
     <div class="max-w-7xl mx-auto">
         <!-- Hero Section / Title -->
         <div class="text-center mb-12 animate-fade-in">
-            <span class="px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">Pencalonan Ketua</span>
-            <h1 class="mt-4 text-4xl sm:text-5xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 tracking-tight">
-                Pencalonan Ketua Yayasan
+            <span class="px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-<?= $theme_primary ?>-500/20 text-<?= $theme_primary ?>-400 border border-<?= $theme_primary ?>-500/30"><?= $section_title ?></span>
+            <h1 class="mt-4 text-4xl sm:text-5xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-<?= $theme_primary ?>-200 via-<?= $theme_primary ?>-400 to-<?= $theme_primary ?>-200 tracking-tight">
+                Pencalonan Ketua Yayasan (<?= $is_rundayan ? 'Rundayan' : 'Individu' ?>)
             </h1>
             <p class="mt-3 text-lg text-emerald-100/80 max-w-2xl mx-auto">
                 Lihat daftar nama kandidat, siapa yang mencalonkannya, alur pencalonan kandidat, dan bagikan informasi calon.
@@ -111,29 +138,24 @@ if (!function_exists('format_nominators')) {
 
         <!-- Control Bar (Search & Nominate Buttons) -->
         <div class="flex flex-col lg:flex-row gap-4 justify-between items-center mb-8 bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-            <form action="<?= base_url('yayasan') ?>" method="GET" class="w-full lg:max-w-md relative">
+            <form action="<?= $search_action_url ?>" method="GET" class="w-full lg:max-w-md relative">
                 <input type="text" name="search" value="<?= htmlspecialchars($search ?? '') ?>" placeholder="Cari nama calon, pencalon, atau buyut..." 
-                       class="w-full pl-11 pr-4 py-3 bg-[#112426] border border-white/10 rounded-xl focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all text-white placeholder-white/40">
+                       class="w-full pl-11 pr-4 py-3 bg-[#112426] border border-white/10 rounded-xl focus:border-<?= $theme_primary ?>-400 focus:ring-1 focus:ring-<?= $theme_primary ?>-400 transition-all text-white placeholder-white/40">
                 <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-white/40"></i>
             </form>
 
             <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                <button onclick="openNominateModal('individu')" 
-                        class="px-5 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 font-bold rounded-xl transition-all shadow-[0_4px_15px_rgba(245,158,11,0.2)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-xs sm:text-sm text-teal-950">
-                    <i class="bi bi-person-plus-fill"></i>
-                    Usulkan Calon Individu
-                </button>
-                <button onclick="openNominateModal('rundayan')" 
-                        class="px-5 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 font-bold rounded-xl transition-all shadow-[0_4px_15px_rgba(6,182,212,0.2)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-950">
-                    <i class="bi bi-people-fill"></i>
-                    Usulkan Calon Rundayan
+                <button onclick="openNominateModal('<?= $page_type ?>')" 
+                        class="px-5 py-3 bg-gradient-to-r from-<?= $theme_primary ?>-500 to-<?= $theme_primary ?>-600 hover:from-<?= $theme_primary ?>-600 hover:to-<?= $theme_primary ?>-700 font-bold rounded-xl transition-all shadow-[0_4px_15px_rgba(<?= $is_rundayan ? '6,182,212' : '245,158,11' ?>,0.2)] hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-xs sm:text-sm <?= $theme_dark_text ?>">
+                    <i class="<?= $is_rundayan ? 'bi bi-people-fill' : 'bi bi-person-plus-fill' ?>"></i>
+                    Usulkan Calon <?= $is_rundayan ? 'Rundayan' : 'Individu' ?>
                 </button>
             </div>
         </div>
 
         <!-- View Tabs -->
         <div class="flex border-b border-white/10 mb-8 w-full">
-            <button onclick="switchTab('grid')" id="tabBtn-grid" class="tab-btn flex-1 pb-3 font-semibold text-xs sm:text-sm border-b-2 border-amber-500 text-amber-300 transition-all flex items-center justify-center gap-1.5">
+            <button onclick="switchTab('grid')" id="tabBtn-grid" class="tab-btn flex-1 pb-3 font-semibold text-xs sm:text-sm border-b-2 border-<?= $theme_primary ?>-500 text-<?= $theme_primary ?>-300 transition-all flex items-center justify-center gap-1.5">
                 <i class="bi bi-grid-fill"></i> Kartu Calon
             </button>
             <?php if ($is_authorized): ?>
@@ -155,11 +177,8 @@ if (!function_exists('format_nominators')) {
                 <h3 class="text-xl font-bold">Belum Ada Calon</h3>
                 <p class="text-white/60 mt-1 max-w-sm mx-auto">Silakan daftarkan calon ketua baru yang menurut Anda layak memimpin yayasan.</p>
                 <div class="flex flex-wrap justify-center gap-3 mt-5">
-                    <button onclick="openNominateModal('individu')" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 font-bold text-sm rounded-xl transition-all text-teal-950">
-                        Usulkan Calon Individu
-                    </button>
-                    <button onclick="openNominateModal('rundayan')" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-600 font-bold text-sm rounded-xl transition-all text-slate-950">
-                        Usulkan Calon Rundayan
+                    <button onclick="openNominateModal('<?= $page_type ?>')" class="px-5 py-2.5 bg-<?= $theme_primary ?>-500 hover:bg-<?= $theme_primary ?>-600 font-bold text-sm rounded-xl transition-all <?= $theme_dark_text ?>">
+                        Usulkan Calon <?= $is_rundayan ? 'Rundayan' : 'Individu' ?>
                     </button>
                 </div>
             </div>
@@ -167,236 +186,108 @@ if (!function_exists('format_nominators')) {
             <!-- Tab Contents -->
             <!-- 1. GRID TAB -->
             <div id="tabContent-grid" class="tab-content animate-fade-in space-y-12">
-                <!-- INDIVIDU SECTION -->
                 <div>
-                    <h2 class="text-xl font-bold text-amber-400 mb-6 flex items-center gap-2">
-                        <i class="bi bi-person-fill"></i> Pencalonan Individu
+                    <h2 class="text-xl font-bold text-<?= $theme_primary ?>-400 mb-6 flex items-center gap-2">
+                        <i class="bi <?= $section_icon ?>"></i> <?= $section_title ?>
                     </h2>
-                    <?php if (empty($individu_candidates)): ?>
-                        <p class="text-white/40 text-sm italic">Belum ada usulan pencalonan individu.</p>
-                    <?php else: ?>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <?php foreach ($individu_candidates as $index => $c): ?>
-                                <div class="bg-gradient-to-br from-[#1b3638] to-[#122829] border border-white/10 rounded-3xl p-6 relative overflow-hidden group hover:border-amber-400/40 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(39,77,79,0.5)] flex flex-col justify-between">
-                                    <div class="absolute -right-16 -top-16 w-36 h-36 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all pointer-events-none"></div>
-                                    
-                                    <div>
-                                        <div class="flex justify-between items-start mb-4">
-                                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                                No. Urut #<?= $index + 1 ?>
-                                            </span>
-                                            <div class="flex items-center gap-2">
-                                                <button onclick="copyNomineeLink(<?= $c['id'] ?>)" 
-                                                        class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all" title="Salin Tautan">
-                                                    <i class="bi bi-link-45deg text-lg"></i>
-                                                </button>
-                                                <button onclick="showQRModal(<?= $c['id'] ?>, '<?= htmlspecialchars(addslashes($c['candidate_name'])) ?>')" 
-                                                        class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all" title="QR Code">
-                                                    <i class="bi bi-qr-code text-sm"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <h3 class="text-2xl font-bold font-display text-white tracking-tight leading-tight mb-2 group-hover:text-amber-300 transition-colors">
-                                            <?= htmlspecialchars($c['candidate_name']) ?>
-                                        </h3>
-                                        
-                                        <div class="space-y-2 mt-4 text-sm text-white/70">
-                                            <div class="flex items-center gap-2.5">
-                                                <i class="bi bi-person-badge text-amber-400"></i>
-                                                <span>Pencalon: <strong class="text-white"><?= format_nominators($c['nominator_name']) ?></strong></span>
-                                            </div>
-                                            <div class="flex items-center gap-2.5">
-                                                <i class="bi bi-people-fill text-amber-400"></i>
-                                                <span>Rundayan/Buyut: <strong class="text-white"><?= htmlspecialchars($c['ancestor_name']) ?></strong></span>
-                                            </div>
-                                            <?php if ($is_authorized): ?>
-                                                <div class="flex items-center gap-2.5">
-                                                    <i class="bi bi-check2-circle text-emerald-400"></i>
-                                                    <span>Dukungan: <strong class="text-emerald-400"><?= $c['votes_count'] ?> suara</strong></span>
-                                                </div>
-                                                <div class="text-[11px] text-emerald-400/80 mt-1 border-t border-white/5 pt-2">
-                                                    Rincian: <?= $c['breakdown_text'] ?>
-                                                </div>
-                                            <?php endif; ?>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <?php foreach ($candidates as $index => $c): ?>
+                            <div class="bg-gradient-to-br from-<?= $is_rundayan ? '[#112d30] to-[#0c1f21]' : '[#1b3638] to-[#122829]' ?> border border-<?= $is_rundayan ? 'cyan-500/20' : 'white/10' ?> rounded-3xl p-6 relative overflow-hidden group hover:border-<?= $theme_primary ?>-400/40 transition-all duration-300 <?= $theme_shadow_hover ?> flex flex-col justify-between">
+                                <div class="absolute -right-16 -top-16 w-36 h-36 bg-<?= $theme_primary ?>-500/5 rounded-full blur-2xl group-hover:bg-<?= $theme_primary ?>-500/10 transition-all pointer-events-none"></div>
+                                
+                                <div>
+                                    <div class="flex justify-between items-start mb-4">
+                                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-<?= $theme_primary ?>-500/10 text-<?= $theme_primary ?>-400 border border-<?= $theme_primary ?>-500/20">
+                                            No. Urut #<?= $index + 1 ?>
+                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            <button onclick="copyNomineeLink(<?= $c['id'] ?>)" 
+                                                    class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all" title="Salin Tautan">
+                                                <i class="bi bi-link-45deg text-lg"></i>
+                                            </button>
+                                            <button onclick="showQRModal(<?= $c['id'] ?>, '<?= htmlspecialchars(addslashes($c['candidate_name'])) ?>')" 
+                                                    class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all" title="QR Code">
+                                                <i class="bi bi-qr-code text-sm"></i>
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <div class="mt-8 pt-4 border-t border-white/5 flex justify-end">
-                                        <a href="<?= base_url('yayasan/detail/'.$c['id']) ?>" 
-                                           class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-teal-950 shadow-md hover:-translate-y-0.5 transition-all text-center">
-                                            Detail Yayasan
-                                        </a>
+                                    <h3 class="text-2xl font-bold font-display text-white tracking-tight leading-tight mb-2 group-hover:text-<?= $theme_primary ?>-300 transition-colors">
+                                        <?= htmlspecialchars($c['candidate_name']) ?>
+                                    </h3>
+                                    
+                                    <div class="space-y-2 mt-4 text-sm text-white/70">
+                                        <div class="flex items-center gap-2.5">
+                                            <i class="bi bi-person-badge text-<?= $theme_primary ?>-400"></i>
+                                            <span>Pencalon: <strong class="text-white"><?= format_nominators($c['nominator_name']) ?></strong></span>
+                                        </div>
+                                        <div class="flex items-center gap-2.5">
+                                            <i class="bi bi-people-fill text-<?= $theme_primary ?>-400"></i>
+                                            <span>Rundayan/Buyut: <strong class="text-white"><?= htmlspecialchars($c['ancestor_name']) ?></strong></span>
+                                        </div>
+                                        <?php if ($is_authorized): ?>
+                                            <div class="flex items-center gap-2.5">
+                                                <i class="bi bi-check2-circle text-emerald-400"></i>
+                                                <span>Dukungan: <strong class="text-emerald-400"><?= $c['votes_count'] ?> suara</strong></span>
+                                            </div>
+                                            <div class="text-[11px] text-emerald-400/80 mt-1 border-t border-white/5 pt-2">
+                                                Rincian: <?= $c['breakdown_text'] ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
 
-                <!-- RUNDAYAN SECTION -->
-                <div>
-                    <h2 class="text-xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
-                        <i class="bi bi-people-fill"></i> Pencalonan Rundayan
-                    </h2>
-                    <?php if (empty($rundayan_candidates)): ?>
-                        <p class="text-white/40 text-sm italic">Belum ada usulan pencalonan rundayan.</p>
-                    <?php else: ?>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <?php foreach ($rundayan_candidates as $index => $c): ?>
-                                <div class="bg-gradient-to-br from-[#112d30] to-[#0c1f21] border border-cyan-500/20 rounded-3xl p-6 relative overflow-hidden group hover:border-cyan-400/40 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(17,45,48,0.5)] flex flex-col justify-between">
-                                    <div class="absolute -right-16 -top-16 w-36 h-36 bg-cyan-500/5 rounded-full blur-2xl group-hover:bg-cyan-500/10 transition-all pointer-events-none"></div>
-                                    
-                                    <div>
-                                        <div class="flex justify-between items-start mb-4">
-                                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                                                No. Urut #<?= $index + 1 ?>
-                                            </span>
-                                            <div class="flex items-center gap-2">
-                                                <button onclick="copyNomineeLink(<?= $c['id'] ?>)" 
-                                                        class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all" title="Salin Tautan">
-                                                    <i class="bi bi-link-45deg text-lg"></i>
-                                                </button>
-                                                <button onclick="showQRModal(<?= $c['id'] ?>, '<?= htmlspecialchars(addslashes($c['candidate_name'])) ?>')" 
-                                                        class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/15 text-white/80 hover:text-white transition-all" title="QR Code">
-                                                    <i class="bi bi-qr-code text-sm"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <h3 class="text-2xl font-bold font-display text-white tracking-tight leading-tight mb-2 group-hover:text-cyan-300 transition-colors">
-                                            <?= htmlspecialchars($c['candidate_name']) ?>
-                                        </h3>
-                                        
-                                        <div class="space-y-2 mt-4 text-sm text-white/70">
-                                            <div class="flex items-center gap-2.5">
-                                                <i class="bi bi-person-badge text-cyan-400"></i>
-                                                <span>Pencalon: <strong class="text-white"><?= format_nominators($c['nominator_name']) ?></strong></span>
-                                            </div>
-                                            <div class="flex items-center gap-2.5">
-                                                <i class="bi bi-people-fill text-cyan-400"></i>
-                                                <span>Rundayan/Buyut: <strong class="text-white"><?= htmlspecialchars($c['ancestor_name']) ?></strong></span>
-                                            </div>
-                                            <?php if ($is_authorized): ?>
-                                                <div class="flex items-center gap-2.5">
-                                                    <i class="bi bi-check2-circle text-emerald-400"></i>
-                                                    <span>Dukungan: <strong class="text-emerald-400"><?= $c['votes_count'] ?> suara</strong></span>
-                                                </div>
-                                                <div class="text-[11px] text-emerald-400/80 mt-1 border-t border-white/5 pt-2">
-                                                    Rincian: <?= $c['breakdown_text'] ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-8 pt-4 border-t border-white/5 flex justify-end">
-                                        <a href="<?= base_url('yayasan/detail/'.$c['id']) ?>" 
-                                           class="px-5 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-600 text-teal-950 shadow-md hover:-translate-y-0.5 transition-all text-center">
-                                            Detail Yayasan
-                                        </a>
-                                    </div>
+                                <div class="mt-8 pt-4 border-t border-white/5 flex justify-end">
+                                    <a href="<?= base_url($detail_base_url.$c['id']) ?>" 
+                                       class="px-5 py-2 rounded-xl text-xs font-bold bg-<?= $theme_primary ?>-500 hover:bg-<?= $theme_primary ?>-600 <?= $theme_dark_text ?> shadow-md hover:-translate-y-0.5 transition-all text-center">
+                                        Detail Yayasan
+                                    </a>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
 
             <!-- 2. TABLE TAB -->
             <?php if ($is_authorized): ?>
                 <div id="tabContent-table" class="tab-content hidden animate-fade-in space-y-12">
-                    <!-- INDIVIDU TABLE -->
-                    <div class="bg-gradient-to-b from-[#1b3638] to-[#122829] border border-white/10 rounded-3xl p-6 overflow-hidden shadow-xl">
-                        <h3 class="text-lg font-bold text-amber-300 mb-4 flex items-center gap-2">
-                            <i class="bi bi-person-fill"></i> Tabel Pencalonan Individu
+                    <div class="bg-gradient-to-b from-<?= $is_rundayan ? '[#112d30] to-[#0c1f21]' : '[#1b3638] to-[#122829]' ?> border border-<?= $is_rundayan ? 'cyan-500/20' : 'white/10' ?> rounded-3xl p-6 overflow-hidden shadow-xl">
+                        <h3 class="text-lg font-bold text-<?= $theme_primary ?>-300 mb-4 flex items-center gap-2">
+                            <i class="bi <?= $section_icon ?>"></i> Tabel <?= $section_title ?>
                         </h3>
-                        <?php if (empty($individu_candidates)): ?>
-                            <p class="text-white/40 text-sm italic">Belum ada data pencalonan individu.</p>
-                        <?php else: ?>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse" style="min-width: 900px;">
-                                    <thead>
-                                        <tr class="border-b border-white/10">
-                                            <th class="pb-4 pr-6 text-xs font-bold text-amber-300 uppercase tracking-wider whitespace-nowrap">No. Urut</th>
-                                            <th class="pb-4 pr-6 text-xs font-bold text-amber-300 uppercase tracking-wider whitespace-nowrap">Nama Calon</th>
-                                            <th class="pb-4 pr-6 text-xs font-bold text-amber-300 uppercase tracking-wider whitespace-nowrap">Pencalon / Nominator</th>
-                                            <th class="pb-4 pr-6 text-xs font-bold text-amber-300 uppercase tracking-wider whitespace-nowrap">Rundayan / Buyut</th>
-                                            <?php if ($is_authorized): ?>
-                                                <th class="pb-4 pr-6 text-xs font-bold text-amber-300 uppercase tracking-wider whitespace-nowrap">Jumlah Dukungan</th>
-                                                <th class="pb-4 pr-6 text-xs font-bold text-amber-300 uppercase tracking-wider whitespace-nowrap">Rincian Pemilih</th>
-                                            <?php endif; ?>
-                                            <th class="pb-4 text-xs font-bold text-amber-300 uppercase tracking-wider text-right whitespace-nowrap">Detail</th>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse" style="min-width: 900px;">
+                                <thead>
+                                    <tr class="border-b border-<?= $is_rundayan ? 'cyan-500/10' : 'white/10' ?>">
+                                        <th class="pb-4 pr-6 text-xs font-bold text-<?= $theme_primary ?>-300 uppercase tracking-wider whitespace-nowrap">No. Urut</th>
+                                        <th class="pb-4 pr-6 text-xs font-bold text-<?= $theme_primary ?>-300 uppercase tracking-wider whitespace-nowrap">Nama Calon</th>
+                                        <th class="pb-4 pr-6 text-xs font-bold text-<?= $theme_primary ?>-300 uppercase tracking-wider whitespace-nowrap">Pencalon / Nominator</th>
+                                        <th class="pb-4 pr-6 text-xs font-bold text-<?= $theme_primary ?>-300 uppercase tracking-wider whitespace-nowrap">Rundayan / Buyut</th>
+                                        <th class="pb-4 pr-6 text-xs font-bold text-<?= $theme_primary ?>-300 uppercase tracking-wider whitespace-nowrap">Jumlah Dukungan</th>
+                                        <th class="pb-4 pr-6 text-xs font-bold text-<?= $theme_primary ?>-300 uppercase tracking-wider whitespace-nowrap">Rincian Pemilih</th>
+                                        <th class="pb-4 text-xs font-bold text-<?= $theme_primary ?>-300 uppercase tracking-wider text-right whitespace-nowrap">Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5">
+                                    <?php foreach ($candidates as $index => $c): ?>
+                                        <tr>
+                                            <td class="py-4 pr-6 text-sm text-white/55 whitespace-nowrap">#<?= $index + 1 ?></td>
+                                            <td class="py-4 pr-6 text-sm font-bold text-white whitespace-nowrap"><?= htmlspecialchars($c['candidate_name']) ?></td>
+                                            <td class="py-4 pr-6 text-sm text-white/80 whitespace-nowrap"><?= format_nominators($c['nominator_name']) ?></td>
+                                            <td class="py-4 pr-6 text-sm text-white/80 whitespace-nowrap"><?= htmlspecialchars($c['ancestor_name']) ?></td>
+                                            <td class="py-4 pr-6 text-sm text-emerald-400 font-bold whitespace-nowrap"><?= $c['votes_count'] ?> suara</td>
+                                            <td class="py-4 pr-6 text-xs text-white/60 whitespace-nowrap"><?= $c['breakdown_text'] ?></td>
+                                            <td class="py-4 text-right whitespace-nowrap">
+                                                <a href="<?= base_url($detail_base_url.$c['id']) ?>" class="inline-flex items-center gap-1 text-xs text-<?= $theme_primary ?>-400 hover:text-<?= $theme_primary ?>-300 font-semibold transition-colors">
+                                                    Lihat <i class="bi bi-chevron-right text-[10px]"></i>
+                                                </a>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-white/5">
-                                        <?php foreach ($individu_candidates as $index => $c): ?>
-                                            <tr>
-                                                <td class="py-4 pr-6 text-sm text-white/55 whitespace-nowrap">#<?= $index + 1 ?></td>
-                                                <td class="py-4 pr-6 text-sm font-bold text-white whitespace-nowrap"><?= htmlspecialchars($c['candidate_name']) ?></td>
-                                                <td class="py-4 pr-6 text-sm text-white/80 whitespace-nowrap"><?= format_nominators($c['nominator_name']) ?></td>
-                                                <td class="py-4 pr-6 text-sm text-white/80 whitespace-nowrap"><?= htmlspecialchars($c['ancestor_name']) ?></td>
-                                                <?php if ($is_authorized): ?>
-                                                    <td class="py-4 pr-6 text-sm text-emerald-400 font-bold whitespace-nowrap"><?= $c['votes_count'] ?> suara</td>
-                                                    <td class="py-4 pr-6 text-xs text-white/60 whitespace-nowrap"><?= $c['breakdown_text'] ?></td>
-                                                <?php endif; ?>
-                                                <td class="py-4 text-right whitespace-nowrap">
-                                                    <a href="<?= base_url('yayasan/detail/'.$c['id']) ?>" class="inline-flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 font-semibold transition-colors">
-                                                        Lihat <i class="bi bi-chevron-right text-[10px]"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- RUNDAYAN TABLE -->
-                    <div class="bg-gradient-to-b from-[#112d30] to-[#0c1f21] border border-cyan-500/20 rounded-3xl p-6 overflow-hidden shadow-xl">
-                        <h3 class="text-lg font-bold text-cyan-300 mb-4 flex items-center gap-2">
-                            <i class="bi bi-people-fill"></i> Tabel Pencalonan Rundayan
-                        </h3>
-                        <?php if (empty($rundayan_candidates)): ?>
-                            <p class="text-white/40 text-sm italic">Belum ada data pencalonan rundayan.</p>
-                        <?php else: ?>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse" style="min-width: 900px;">
-                                    <thead>
-                                        <tr class="border-b border-cyan-500/10">
-                                            <th class="pb-4 pr-6 text-xs font-bold text-cyan-300 uppercase tracking-wider whitespace-nowrap">No. Urut</th>
-                                            <th class="pb-4 pr-6 text-xs font-bold text-cyan-300 uppercase tracking-wider whitespace-nowrap">Nama Calon</th>
-                                            <th class="pb-4 pr-6 text-xs font-bold text-cyan-300 uppercase tracking-wider whitespace-nowrap">Pencalon / Nominator</th>
-                                            <th class="pb-4 pr-6 text-xs font-bold text-cyan-300 uppercase tracking-wider whitespace-nowrap">Rundayan / Buyut</th>
-                                            <?php if ($is_authorized): ?>
-                                                <th class="pb-4 pr-6 text-xs font-bold text-cyan-300 uppercase tracking-wider whitespace-nowrap">Jumlah Dukungan</th>
-                                                <th class="pb-4 pr-6 text-xs font-bold text-cyan-300 uppercase tracking-wider whitespace-nowrap">Rincian Pemilih</th>
-                                            <?php endif; ?>
-                                            <th class="pb-4 text-xs font-bold text-cyan-300 uppercase tracking-wider text-right whitespace-nowrap">Detail</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-white/5">
-                                        <?php foreach ($rundayan_candidates as $index => $c): ?>
-                                            <tr>
-                                                <td class="py-4 pr-6 text-sm text-white/55 whitespace-nowrap">#<?= $index + 1 ?></td>
-                                                <td class="py-4 pr-6 text-sm font-bold text-white whitespace-nowrap"><?= htmlspecialchars($c['candidate_name']) ?></td>
-                                                <td class="py-4 pr-6 text-sm text-white/80 whitespace-nowrap"><?= format_nominators($c['nominator_name']) ?></td>
-                                                <td class="py-4 pr-6 text-sm text-white/80 whitespace-nowrap"><?= htmlspecialchars($c['ancestor_name']) ?></td>
-                                                <?php if ($is_authorized): ?>
-                                                    <td class="py-4 pr-6 text-sm text-cyan-400 font-bold whitespace-nowrap"><?= $c['votes_count'] ?> suara</td>
-                                                    <td class="py-4 pr-6 text-xs text-white/60 whitespace-nowrap"><?= $c['breakdown_text'] ?></td>
-                                                <?php endif; ?>
-                                                <td class="py-4 text-right whitespace-nowrap">
-                                                    <a href="<?= base_url('yayasan/detail/'.$c['id']) ?>" class="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">
-                                                        Lihat <i class="bi bi-chevron-right text-[10px]"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
@@ -405,15 +296,14 @@ if (!function_exists('format_nominators')) {
             <div id="tabContent-chart" class="tab-content hidden animate-fade-in">
                 <div class="space-y-8">
                     <?php 
-                        // group all candidates by ancestor for the diagram
                         $raw_grouped_ancestor = [];
                         foreach ($candidates as $c) {
                             $raw_grouped_ancestor[$c['ancestor_name']][] = $c;
                         }
                     ?>
                     <?php foreach ($raw_grouped_ancestor as $ancestor => $cand_list): ?>
-                        <div class="bg-gradient-to-br from-[#1b3638] to-[#122829] border border-white/10 rounded-3xl p-6 shadow-xl">
-                            <h3 class="text-xl font-bold text-amber-300 border-b border-white/5 pb-3 mb-6 flex items-center gap-2">
+                        <div class="bg-gradient-to-br from-<?= $is_rundayan ? '[#112d30] to-[#0c1f21]' : '[#1b3638] to-[#122829]' ?> border border-<?= $is_rundayan ? 'cyan-500/20' : 'white/10' ?> rounded-3xl p-6 shadow-xl">
+                            <h3 class="text-xl font-bold text-<?= $theme_primary ?>-300 border-b border-white/5 pb-3 mb-6 flex items-center gap-2">
                                 <i class="bi bi-people-fill"></i> Rundayan: <?= htmlspecialchars($ancestor) ?>
                             </h3>
                             
@@ -426,7 +316,7 @@ if (!function_exists('format_nominators')) {
                             <div class="overflow-x-auto pb-4">
                                 <div class="inline-flex flex-col gap-6 min-w-full">
                                     <?php foreach ($roots as $nominator => $root_cands): ?>
-                                        <div class="flex flex-col gap-4 pl-4 border-l-2 border-amber-500/30">
+                                        <div class="flex flex-col gap-4 pl-4 border-l-2 border-<?= $theme_primary ?>-500/30">
                                             <div class="flex items-center gap-2">
                                                 <span class="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/55 uppercase tracking-wider">Anggota Keluarga Samhudi</span>
                                                 <strong class="text-white text-sm font-semibold"><?= htmlspecialchars($nominator) ?></strong>
@@ -463,8 +353,8 @@ if (!function_exists('format_nominators')) {
 
                 <!-- Step Indicator -->
                 <div class="px-6 pt-5 flex items-center justify-center gap-2 shrink-0">
-                    <div id="indicator-step1" class="flex items-center gap-1.5 text-amber-300">
-                        <span id="indicator-step1-circle" class="w-5 h-5 rounded-full bg-amber-500 text-teal-950 text-[10px] font-bold flex items-center justify-center">1</span>
+                    <div id="indicator-step1" class="flex items-center gap-1.5 text-<?= $theme_primary ?>-300">
+                        <span id="indicator-step1-circle" class="w-5 h-5 rounded-full bg-<?= $theme_primary ?>-500 <?= $theme_dark_text ?> text-[10px] font-bold flex items-center justify-center">1</span>
                         <span class="text-[11px] font-bold">Data Pemilih</span>
                     </div>
                     <div class="w-8 h-0.5 bg-white/10" id="indicator-line"></div>
@@ -475,46 +365,46 @@ if (!function_exists('format_nominators')) {
                 </div>
                 
                 <!-- Modal Form -->
-                <form id="multiStepNominateForm" action="<?= base_url('yayasan/nominate') ?>" method="POST" autocomplete="off" class="flex flex-col overflow-hidden">
-                    <input type="hidden" name="type" id="input_nominate_type" value="individu">
+                <form id="multiStepNominateForm" action="<?= $form_action_url ?>" method="POST" autocomplete="off" class="flex flex-col overflow-hidden">
+                    <input type="hidden" name="type" id="input_nominate_type" value="<?= $page_type ?>">
                     
                     <!-- Scrollable Steps Content Area -->
                     <div class="overflow-y-auto max-h-[45vh] sm:max-h-[55vh]">
                         <!-- Step 1 Content -->
                         <div id="nominateStep-1" class="px-6 py-5 space-y-4">
                             <div class="relative">
-                                <label class="block text-xs font-semibold text-amber-400/80 uppercase tracking-wider mb-2">Nama Pemilih</label>
+                                <label class="block text-xs font-semibold text-<?= $theme_primary ?>-400/80 uppercase tracking-wider mb-2">Nama Pemilih</label>
                                 <input type="text" name="nominator_name" id="input_nominator_name" required placeholder="Contoh: Budi Samhudi" autocomplete="off"
                                        class="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none transition-all text-white text-sm placeholder-white/30">
                                 <div id="nominator_suggestions_box" class="absolute left-0 right-0 top-full mt-1 bg-[#1b3638] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-[11000] divide-y divide-white/5"></div>
                             </div>
-
+ 
                             <div class="relative">
-                                <label class="block text-xs font-semibold text-amber-400/80 uppercase tracking-wider mb-2">Rundayan / Buyut (Keturunan)</label>
+                                <label class="block text-xs font-semibold text-<?= $theme_primary ?>-400/80 uppercase tracking-wider mb-2">Rundayan / Buyut (Keturunan)</label>
                                 <input type="text" name="ancestor_name" id="input_ancestor_name" required placeholder="Contoh: Buyut Ahmad Samhudi" autocomplete="off"
                                        class="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none transition-all text-white text-sm placeholder-white/30">
                                 <div id="ancestor_suggestions_box" class="absolute left-0 right-0 top-full mt-1 bg-[#1b3638] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-[11000] divide-y divide-white/5"></div>
                             </div>
                         </div>
-
+ 
                         <!-- Step 2 Content (Hidden by default) -->
                         <div id="nominateStep-2" class="px-6 py-5 space-y-4 hidden pb-12">
                             <div class="relative">
-                                <label class="block text-xs font-semibold text-amber-400/80 uppercase tracking-wider mb-2">Nama Calon Formatur 1 <span class="text-red-400">*</span></label>
+                                <label class="block text-xs font-semibold text-<?= $theme_primary ?>-400/80 uppercase tracking-wider mb-2">Nama Calon Formatur 1 <span class="text-red-400">*</span></label>
                                 <input type="text" name="candidate_name_1" id="input_candidate_name_1" required placeholder="Contoh: H. Bahrudin" autocomplete="off"
                                        class="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none transition-all text-white text-sm placeholder-white/30">
                                 <div id="candidate_suggestions_box_1" class="absolute left-0 right-0 top-full mt-1 bg-[#1b3638] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-[11000] divide-y divide-white/5"></div>
                             </div>
-
+ 
                             <div class="relative">
-                                <label class="block text-xs font-semibold text-amber-400/80 uppercase tracking-wider mb-2">Nama Calon Formatur 2 <span class="text-white/30 normal-case font-normal">(opsional)</span></label>
+                                <label class="block text-xs font-semibold text-<?= $theme_primary ?>-400/80 uppercase tracking-wider mb-2">Nama Calon Formatur 2 <span class="text-white/30 normal-case font-normal">(opsional)</span></label>
                                 <input type="text" name="candidate_name_2" id="input_candidate_name_2" placeholder="Masukkan calon kedua..." autocomplete="off"
                                        class="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none transition-all text-white text-sm placeholder-white/30">
                                 <div id="candidate_suggestions_box_2" class="absolute left-0 right-0 top-full mt-1 bg-[#1b3638] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-[11000] divide-y divide-white/5"></div>
                             </div>
-
+ 
                             <div class="relative">
-                                <label class="block text-xs font-semibold text-amber-400/80 uppercase tracking-wider mb-2">Nama Calon Formatur 3 <span class="text-white/30 normal-case font-normal">(opsional)</span></label>
+                                <label class="block text-xs font-semibold text-<?= $theme_primary ?>-400/80 uppercase tracking-wider mb-2">Nama Calon Formatur 3 <span class="text-white/30 normal-case font-normal">(opsional)</span></label>
                                 <input type="text" name="candidate_name_3" id="input_candidate_name_3" placeholder="Masukkan calon ketiga..." autocomplete="off"
                                        class="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl focus:outline-none transition-all text-white text-sm placeholder-white/30">
                                 <div id="candidate_suggestions_box_3" class="absolute left-0 right-0 top-full mt-1 bg-[#1b3638] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-[11000] divide-y divide-white/5"></div>
@@ -522,7 +412,7 @@ if (!function_exists('format_nominators')) {
                             <p id="duplicate-warning-text" class="text-red-400 text-xs font-semibold hidden mt-2">Nama calon formatur 1, 2, dan 3 tidak boleh ada yang sama!</p>
                         </div>
                     </div>
-
+ 
                     <!-- Modal Footer Buttons -->
                     <div class="px-6 pb-5 flex gap-3 shrink-0">
                         <!-- Step 1 Footer -->
@@ -532,7 +422,7 @@ if (!function_exists('format_nominators')) {
                                 Batal
                             </button>
                             <button type="button" id="btn-next-step" onclick="goToStep(2)"
-                                    class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-teal-950 text-sm font-bold transition-all shadow-[0_4px_12px_rgba(245,158,11,0.3)] flex items-center justify-center gap-1.5">
+                                    class="flex-1 py-2.5 rounded-xl bg-<?= $theme_primary ?>-500 hover:bg-<?= $theme_primary ?>-600 active:scale-95 <?= $theme_dark_text ?> text-sm font-bold transition-all shadow-[0_4px_12px_rgba(<?= $is_rundayan ? '6,182,212' : '245,158,11' ?>,0.3)] flex items-center justify-center gap-1.5">
                                 Selanjutnya <i class="bi bi-arrow-right"></i>
                             </button>
                         </div>
@@ -544,7 +434,7 @@ if (!function_exists('format_nominators')) {
                                 <i class="bi bi-arrow-left"></i> Kembali
                             </button>
                             <button type="submit" id="btn-submit-form"
-                                    class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-teal-950 text-sm font-bold transition-all shadow-[0_4px_12px_rgba(245,158,11,0.3)]">
+                                    class="flex-1 py-2.5 rounded-xl bg-<?= $theme_primary ?>-500 hover:bg-<?= $theme_primary ?>-600 active:scale-95 <?= $theme_dark_text ?> text-sm font-bold transition-all shadow-[0_4px_12px_rgba(<?= $is_rundayan ? '6,182,212' : '245,158,11' ?>,0.3)]">
                                 Kirim
                             </button>
                         </div>
@@ -560,20 +450,20 @@ if (!function_exists('format_nominators')) {
         <div class="bg-gradient-to-b from-[#1b3638] to-[#122829] border border-white/15 rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl transform scale-95 transition-all duration-300 relative text-center p-6">
             <button onclick="toggleShareModal(false)" class="absolute right-4 top-4 text-white/60 hover:text-white text-2xl font-bold">&times;</button>
             
-            <h3 class="text-xl font-bold text-amber-300 mt-2">QR Code Kandidat</h3>
+            <h3 class="text-xl font-bold text-<?= $theme_primary ?>-300 mt-2">QR Code Kandidat</h3>
             <p id="shareTargetName" class="text-white/80 text-sm mt-1 mb-4 font-semibold"></p>
 
             <div class="bg-white p-3 rounded-2xl inline-block shadow-lg mb-4 relative min-w-[216px] min-h-[216px] flex items-center justify-center">
                 <!-- Loading Spinner -->
                 <div id="qrSpinner" class="absolute inset-0 flex items-center justify-center bg-white rounded-2xl">
-                    <div class="animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent"></div>
+                    <div class="animate-spin rounded-full h-8 w-8 border-4 border-<?= $theme_primary ?>-500 border-t-transparent"></div>
                 </div>
                 <img id="shareQRCode" src="" alt="QR Code" class="w-48 h-48 opacity-0 transition-opacity duration-300" onload="document.getElementById('qrSpinner').style.display='none'; this.classList.remove('opacity-0');">
             </div>
 
             <div class="flex flex-col gap-3.5 mt-2">
                 <button onclick="downloadQRCode()" 
-                        class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-teal-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(245,158,11,0.2)]">
+                        class="w-full py-2.5 bg-gradient-to-r from-<?= $theme_primary ?>-500 to-<?= $theme_primary ?>-600 hover:from-<?= $theme_primary ?>-600 hover:to-<?= $theme_primary ?>-700 <?= $theme_dark_text ?> font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(<?= $is_rundayan ? '6,182,212' : '245,158,11' ?>,0.2)]">
                     <i class="bi bi-download"></i>
                     Unduh Gambar QR Code
                 </button>
@@ -581,7 +471,7 @@ if (!function_exists('format_nominators')) {
                     <input type="text" id="shareLinkInput" readonly 
                            class="w-full pl-4 pr-16 py-3 bg-[#112426] border border-white/10 rounded-xl text-white text-xs select-all text-center">
                     <button onclick="copyShareLink()" 
-                            class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-teal-950 font-bold rounded-lg text-xs transition-all">
+                            class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-<?= $theme_primary ?>-500 hover:bg-<?= $theme_primary ?>-600 <?= $theme_dark_text ?> font-bold rounded-lg text-xs transition-all">
                         Copy
                     </button>
                 </div>
@@ -591,7 +481,7 @@ if (!function_exists('format_nominators')) {
     </div>
 
     <!-- Floating Toast Notification -->
-    <div id="toastNotification" class="fixed bottom-5 right-5 z-[20000] bg-gradient-to-r from-teal-950 to-[#122829] border border-amber-500/30 text-amber-300 px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-2.5 opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2">
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-[20000] bg-gradient-to-r from-teal-950 to-[#122829] border border-<?= $theme_primary ?>-500/30 text-<?= $theme_primary ?>-300 px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-2.5 opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2">
         <i class="bi bi-check-circle-fill text-emerald-400 text-lg"></i>
         <span class="text-sm font-semibold">Tautan kandidat berhasil disalin!</span>
     </div>
@@ -612,18 +502,22 @@ if (!function_exists('format_nominators')) {
 </style>
 
 <script>
+    const themePrimary = '<?= $theme_primary ?>';
+    const borderActive = 'border-' + themePrimary + '-500';
+    const textActive = 'text-' + themePrimary + '-300';
+
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.getElementById('tabContent-' + tabId).classList.remove('hidden');
         
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('border-amber-500', 'text-amber-300');
+            btn.classList.remove(borderActive, textActive);
             btn.classList.add('border-transparent', 'text-white/60');
         });
         const activeBtn = document.getElementById('tabBtn-' + tabId);
         if (activeBtn) {
             activeBtn.classList.remove('border-transparent', 'text-white/60');
-            activeBtn.classList.add('border-amber-500', 'text-amber-300');
+            activeBtn.classList.add(borderActive, textActive);
         }
     }
 
@@ -646,7 +540,7 @@ if (!function_exists('format_nominators')) {
                     const initial = name.charAt(0).toUpperCase();
                     const itemHtml = `
                         <div onclick="selectSuggestion('${inputId}', '${boxId}', \`${name.replace(/'/g, "\\'")}\`)" class="px-4 py-3 hover:bg-white/5 cursor-pointer flex items-center gap-3 transition-colors text-left border-b border-white/5">
-                            <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-xs shrink-0">
+                            <div class="w-8 h-8 rounded-full bg-${themePrimary}-500/20 text-${themePrimary}-300 flex items-center justify-center font-bold text-xs shrink-0">
                                 ${initial}
                             </div>
                             <div class="flex-1 min-w-0">
@@ -662,7 +556,7 @@ if (!function_exists('format_nominators')) {
             // Always provide option to add manual text currently typed if not fully matched
             if (query.length > 0 && !dataArray.some(name => name.toLowerCase() === query)) {
                 const addHtml = `
-                    <div onclick="selectSuggestion('${inputId}', '${boxId}', \`${filterText.replace(/'/g, "\\'")}\`)" class="px-4 py-2.5 hover:bg-white/5 cursor-pointer text-center text-xs text-amber-300 font-bold flex items-center justify-center gap-1.5 transition-colors">
+                    <div onclick="selectSuggestion('${inputId}', '${boxId}', \`${filterText.replace(/'/g, "\\'")}\`)" class="px-4 py-2.5 hover:bg-white/5 cursor-pointer text-center text-xs text-${themePrimary}-300 font-bold flex items-center justify-center gap-1.5 transition-colors">
                         <i class="bi bi-plus-circle-fill"></i> Gunakan "<strong>${filterText}</strong>"
                     </div>
                 `;
@@ -912,7 +806,7 @@ if (!function_exists('format_nominators')) {
     }
 
     function showQRModal(id, name) {
-        const shareUrl = "<?= base_url('yayasan') ?>";
+        const shareUrl = "<?= base_url($page_type === 'rundayan' ? 'rundayan' : 'yayasan') ?>";
         document.getElementById('shareTargetName').textContent = name;
         document.getElementById('shareLinkInput').value = shareUrl;
         
@@ -991,7 +885,7 @@ if (!function_exists('format_nominators')) {
 
     let toastTimeout = null;
     function copyNomineeLink(id) {
-        const shareUrl = "<?= base_url('yayasan') ?>";
+        const shareUrl = "<?= base_url($page_type === 'rundayan' ? 'rundayan' : 'yayasan') ?>";
         copyTextToClipboard(shareUrl).then(() => {
             const toast = document.getElementById('toastNotification');
             toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');

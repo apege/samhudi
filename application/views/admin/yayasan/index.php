@@ -125,6 +125,7 @@
                                 <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Calon</th>
                                 <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Pencalon</th>
                                 <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Undayan / Buyut</th>
+                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Jenis</th>
                                 <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Jumlah Suara</th>
                                 <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Status</th>
                                 <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Tanggal Masuk</th>
@@ -147,10 +148,17 @@
                                         <td class="py-4 px-4 whitespace-nowrap text-sm text-brand-light">
                                             <?= htmlspecialchars($c['nominator_name']) ?>
                                         </td>
-
+ 
                                         <!-- Ancestor Name -->
                                         <td class="py-4 px-4 whitespace-nowrap text-sm text-brand-light">
                                             <?= htmlspecialchars($c['ancestor_name']) ?>
+                                        </td>
+ 
+                                        <!-- Type -->
+                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
+                                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold <?= ($c['type'] ?? 'individu') === 'rundayan' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30' ?>">
+                                                 <?= ucfirst(htmlspecialchars($c['type'] ?? 'individu')) ?>
+                                             </span>
                                         </td>
 
                                         <!-- Votes Count -->
@@ -159,7 +167,7 @@
                                                 <?= $c['votes_count'] ?>
                                             </span>
                                         </td>
-
+ 
                                         <!-- Status Badge -->
                                         <td class="py-4 px-4 whitespace-nowrap text-sm">
                                             <?php if ($c['status'] == 'approved'): ?>

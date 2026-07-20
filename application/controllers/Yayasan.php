@@ -25,6 +25,10 @@ class Yayasan extends CI_Controller {
         }
         
         $this->db->where('status', 'approved');
+        $this->db->group_start();
+        $this->db->where('type', 'individu');
+        $this->db->or_where('type', NULL);
+        $this->db->group_end();
         $raw_candidates = $this->db->get('yayasan_candidates')->result_array();
         $data['search'] = $search;
 
@@ -37,7 +41,7 @@ class Yayasan extends CI_Controller {
                     'id'             => $c['id'],
                     'candidate_name' => $c['candidate_name'],
                     'ancestor_name'  => $c['ancestor_name'], // fallback primary ancestor
-                    'type'           => $c['type'] ?? 'individu',
+                    'type'           => 'individu',
                     'nominators'     => [trim($c['nominator_name'])],
                     'ancestors'      => [trim($c['ancestor_name'])],
                     'votes_count'    => 1,
@@ -57,39 +61,26 @@ class Yayasan extends CI_Controller {
             }
         }
 
-        // Split into Individu & Rundayan
-        $individu_candidates = [];
-        $rundayan_candidates = [];
-
+        $candidates = [];
         foreach ($grouped as $g) {
             $g['nominator_name'] = implode(', ', array_unique($g['nominators']));
             $g['ancestor_name'] = implode(', ', array_unique($g['ancestors']));
             
-            // Build breakdown text
             $breakdowns = [];
             foreach ($g['ancestor_breakdown'] as $anc_name => $count) {
                 $breakdowns[] = htmlspecialchars($anc_name) . " (" . $count . " suara)";
             }
             $g['breakdown_text'] = implode(', ', $breakdowns);
-
-            if ($g['type'] === 'rundayan') {
-                $rundayan_candidates[] = $g;
-            } else {
-                $individu_candidates[] = $g;
-            }
+            $candidates[] = $g;
         }
 
-        // Sort both arrays by votes_count DESC
-        usort($individu_candidates, function($a, $b) {
-            return $b['votes_count'] <=> $a['votes_count'];
-        });
-        usort($rundayan_candidates, function($a, $b) {
+        // Sort by votes_count DESC
+        usort($candidates, function($a, $b) {
             return $b['votes_count'] <=> $a['votes_count'];
         });
 
-        $data['individu_candidates'] = $individu_candidates;
-        $data['rundayan_candidates'] = $rundayan_candidates;
-        $data['candidates'] = array_merge($individu_candidates, $rundayan_candidates); // compatibility fallback
+        $data['candidates'] = $candidates;
+        $data['page_type'] = 'individu';
 
         // Determine if user is Dewan Pembina, admin, super_admin, or "Teguh" (administrator)
         $is_authorized = false;
@@ -111,8 +102,19 @@ class Yayasan extends CI_Controller {
         $data['ancestors'] = $this->db->select('DISTINCT(ancestor_name)')->get_where('yayasan_candidates', ['status' => 'approved'])->result_array();
 
         // Fetch all distinct candidate and nominator names for autocomplete
-        $cands = $this->db->select('candidate_name AS name')->get_where('yayasan_candidates', ['status' => 'approved'])->result_array();
-        $noms = $this->db->select('nominator_name AS name')->get_where('yayasan_candidates', ['status' => 'approved'])->result_array();
+        $this->db->where('status', 'approved');
+        $this->db->group_start();
+        $this->db->where('type', 'individu');
+        $this->db->or_where('type', NULL);
+        $this->db->group_end();
+        $cands = $this->db->select('candidate_name AS name')->get('yayasan_candidates')->result_array();
+
+        $this->db->where('status', 'approved');
+        $this->db->group_start();
+        $this->db->where('type', 'individu');
+        $this->db->or_where('type', NULL);
+        $this->db->group_end();
+        $noms = $this->db->select('nominator_name AS name')->get('yayasan_candidates')->result_array();
         
         $merged_names = array_merge($cands, $noms);
         $unique_names = [];
@@ -276,18 +278,28 @@ class Yayasan extends CI_Controller {
 
     public function detail($id)
     {
-        $candidate = $this->db->get_where('yayasan_candidates', ['id' => $id, 'status' => 'approved'])->row_array();
+        $this->db->where('id', $id);
+        $this->db->where('status', 'approved');
+        $this->db->group_start();
+        $this->db->where('type', 'individu');
+        $this->db->or_where('type', NULL);
+        $this->db->group_end();
+        $candidate = $this->db->get('yayasan_candidates')->row_array();
+
         if (!$candidate) {
             show_404();
             return;
         }
 
         // Fetch all nominations for this candidate (grouped context)
-        $all_nominations = $this->db->get_where('yayasan_candidates', [
-            'candidate_name' => $candidate['candidate_name'],
-            'ancestor_name'  => $candidate['ancestor_name'],
-            'status'         => 'approved'
-        ])->result_array();
+        $this->db->where('candidate_name', $candidate['candidate_name']);
+        $this->db->where('ancestor_name', $candidate['ancestor_name']);
+        $this->db->where('status', 'approved');
+        $this->db->group_start();
+        $this->db->where('type', 'individu');
+        $this->db->or_where('type', NULL);
+        $this->db->group_end();
+        $all_nominations = $this->db->get('yayasan_candidates')->result_array();
 
         // Total votes count is the count of nominations
         $candidate['votes_count'] = count($all_nominations);
@@ -326,10 +338,13 @@ class Yayasan extends CI_Controller {
             $current_nominator = $nominator;
             $sub_chain = [];
             while (!empty($current_nominator)) {
-                $parent = $this->db->get_where('yayasan_candidates', [
-                    'candidate_name' => $current_nominator,
-                    'status'         => 'approved'
-                ])->row_array();
+                $this->db->where('candidate_name', $current_nominator);
+                $this->db->where('status', 'approved');
+                $this->db->group_start();
+                $this->db->where('type', 'individu');
+                $this->db->or_where('type', NULL);
+                $this->db->group_end();
+                $parent = $this->db->get('yayasan_candidates')->row_array();
                 
                 if ($parent) {
                     if (!in_array($parent['id'], $visited)) {
@@ -360,10 +375,13 @@ class Yayasan extends CI_Controller {
         $data['parent_chain'] = $parent_chain;
 
         // 2. Trace children (Downwards) - Who this candidate nominated
-        $data['nominated_by_this'] = $this->db->get_where('yayasan_candidates', [
-            'nominator_name' => $candidate['candidate_name'],
-            'status'         => 'approved'
-        ])->result_array();
+        $this->db->where('nominator_name', $candidate['candidate_name']);
+        $this->db->where('status', 'approved');
+        $this->db->group_start();
+        $this->db->where('type', 'individu');
+        $this->db->or_where('type', NULL);
+        $this->db->group_end();
+        $data['nominated_by_this'] = $this->db->get('yayasan_candidates')->result_array();
 
         $this->load->view('templates/header');
         $this->load->view('partials/navbar');
