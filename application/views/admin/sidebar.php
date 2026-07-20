@@ -58,7 +58,7 @@ $current_page = isset($active_menu) ? $active_menu : ($this->uri->segment(2) ? $
         </a>
 
         <!-- Kelola Yayasan -->
-        <a href="#" 
+        <a href="<?= base_url('admin/yayasan') ?>" 
            class="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium transition-all <?= ($current_page == 'yayasan') ? 'bg-gradient-to-r from-brand-medium to-brand-dark/20 text-white border-l-4 border-white shadow-md' : 'text-white/80 hover:text-white hover:bg-brand-medium/20' ?>">
             <img src="<?= base_url('assets/images/3d_yayasan.png') ?>" class="w-9 h-9 object-contain" alt="Kelola Yayasan">
             <span>Kelola Yayasan</span>

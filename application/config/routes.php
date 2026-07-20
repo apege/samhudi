@@ -84,5 +84,17 @@ $route['admin/lowongan_reject/(:num)']      = 'admin/lowongan_reject/$1';
 $route['admin/lowongan_delete/(:num)']      = 'admin/lowongan_delete/$1';
 $route['admin/lowongan_add']                = 'admin/lowongan_add';
 
+// Yayasan Public Routes
+$route['yayasan']                           = 'yayasan/index';
+$route['yayasan/nominate']                  = 'yayasan/nominate';
+$route['yayasan/vote/(:num)']               = 'yayasan/vote/$1';
+$route['yayasan/detail/(:num)']             = 'yayasan/detail/$1';
+
+// Admin Yayasan Routes
+$route['admin/yayasan']                     = 'admin/yayasan';
+$route['admin/yayasan/edit/(:num)']         = 'admin/yayasan_edit/$1';
+$route['admin/yayasan/delete/(:num)']       = 'admin/yayasan_delete/$1';
+$route['admin/yayasan/status/(:num)/(:any)'] = 'admin/yayasan_update_status/$1/$2';
+
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;

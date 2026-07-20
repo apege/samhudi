@@ -1,0 +1,373 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Yayasan extends CI_Controller {
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->database();
+        $this->load->helper(['url', 'form']);
+        $this->load->library(['session', 'form_validation']);
+        $this->load->model('Admin_model'); // load just in case we need general log or query helpers
+    }
+
+    public function index()
+    {
+        // Get all approved candidates
+        $search = $this->input->get('search', TRUE);
+        if ($search) {
+            $this->db->group_start();
+            $this->db->like('candidate_name', $search);
+            $this->db->or_like('nominator_name', $search);
+            $this->db->or_like('ancestor_name', $search);
+            $this->db->group_end();
+        }
+        
+        $this->db->where('status', 'approved');
+        $raw_candidates = $this->db->get('yayasan_candidates')->result_array();
+        $data['search'] = $search;
+
+        // Group candidates by name to handle unique nominee constraint
+        $grouped = [];
+        foreach ($raw_candidates as $c) {
+            $key = strtolower(trim($c['candidate_name']));
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'id'             => $c['id'],
+                    'candidate_name' => $c['candidate_name'],
+                    'ancestor_name'  => $c['ancestor_name'], // fallback primary ancestor
+                    'type'           => $c['type'] ?? 'individu',
+                    'nominators'     => [trim($c['nominator_name'])],
+                    'ancestors'      => [trim($c['ancestor_name'])],
+                    'votes_count'    => 1,
+                    'ancestor_breakdown' => [trim($c['ancestor_name']) => 1]
+                ];
+            } else {
+                $grouped[$key]['nominators'][] = trim($c['nominator_name']);
+                $grouped[$key]['ancestors'][] = trim($c['ancestor_name']);
+                $grouped[$key]['votes_count'] += 1;
+                
+                $anc = trim($c['ancestor_name']);
+                if (!isset($grouped[$key]['ancestor_breakdown'][$anc])) {
+                    $grouped[$key]['ancestor_breakdown'][$anc] = 1;
+                } else {
+                    $grouped[$key]['ancestor_breakdown'][$anc] += 1;
+                }
+            }
+        }
+
+        // Split into Individu & Rundayan
+        $individu_candidates = [];
+        $rundayan_candidates = [];
+
+        foreach ($grouped as $g) {
+            $g['nominator_name'] = implode(', ', array_unique($g['nominators']));
+            $g['ancestor_name'] = implode(', ', array_unique($g['ancestors']));
+            
+            // Build breakdown text
+            $breakdowns = [];
+            foreach ($g['ancestor_breakdown'] as $anc_name => $count) {
+                $breakdowns[] = htmlspecialchars($anc_name) . " (" . $count . " suara)";
+            }
+            $g['breakdown_text'] = implode(', ', $breakdowns);
+
+            if ($g['type'] === 'rundayan') {
+                $rundayan_candidates[] = $g;
+            } else {
+                $individu_candidates[] = $g;
+            }
+        }
+
+        // Sort both arrays by votes_count DESC
+        usort($individu_candidates, function($a, $b) {
+            return $b['votes_count'] <=> $a['votes_count'];
+        });
+        usort($rundayan_candidates, function($a, $b) {
+            return $b['votes_count'] <=> $a['votes_count'];
+        });
+
+        $data['individu_candidates'] = $individu_candidates;
+        $data['rundayan_candidates'] = $rundayan_candidates;
+        $data['candidates'] = array_merge($individu_candidates, $rundayan_candidates); // compatibility fallback
+
+        // Determine if user is Dewan Pembina, admin, super_admin, or "Teguh" (administrator)
+        $is_authorized = false;
+        if ($this->session->userdata('logged_in')) {
+            $role = $this->session->userdata('role');
+            $username = strtolower($this->session->userdata('username') ?? '');
+            $full_name = strtolower($this->session->userdata('full_name') ?? '');
+            if (in_array($role, ['admin', 'super_admin', 'dewan_pembina']) || strpos($username, 'teguh') !== false || strpos($full_name, 'teguh') !== false) {
+                $is_authorized = true;
+            }
+        }
+        $data['is_authorized'] = $is_authorized;
+
+        // Get list of voted candidate IDs from cookies
+        $voted_cookie = $this->input->cookie('voted_candidates');
+        $data['voted_ids'] = $voted_cookie ? explode(',', $voted_cookie) : [];
+
+        // Fetch distinct ancestor names for autocomplete
+        $data['ancestors'] = $this->db->select('DISTINCT(ancestor_name)')->get_where('yayasan_candidates', ['status' => 'approved'])->result_array();
+
+        // Fetch all distinct candidate and nominator names for autocomplete
+        $cands = $this->db->select('candidate_name AS name')->get_where('yayasan_candidates', ['status' => 'approved'])->result_array();
+        $noms = $this->db->select('nominator_name AS name')->get_where('yayasan_candidates', ['status' => 'approved'])->result_array();
+        
+        $merged_names = array_merge($cands, $noms);
+        $unique_names = [];
+        foreach ($merged_names as $row) {
+            $cleaned = trim($row['name']);
+            if (!empty($cleaned) && !in_array($cleaned, $unique_names)) {
+                $unique_names[] = $cleaned;
+            }
+        }
+        sort($unique_names);
+        $data['all_names'] = $unique_names;
+
+        $this->load->view('templates/header');
+        $this->load->view('partials/navbar');
+        $this->load->view('yayasan/index', $data);
+        $this->load->view('templates/footer');
+    }
+
+    public function nominate()
+    {
+        $this->form_validation->set_rules('nominator_name', 'Nama Pencalon', 'required|trim|max_length[255]');
+        $this->form_validation->set_rules('ancestor_name', 'Undayan / Buyut', 'required|trim|max_length[255]');
+        $this->form_validation->set_rules('candidate_name_1', 'Nama yang Dicalonkan 1', 'required|trim|max_length[255]');
+        $this->form_validation->set_rules('candidate_name_2', 'Nama yang Dicalonkan 2', 'trim|max_length[255]');
+        $this->form_validation->set_rules('candidate_name_3', 'Nama yang Dicalonkan 3', 'trim|max_length[255]');
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->session->set_flashdata('error', validation_errors(' ', ' '));
+            redirect('yayasan');
+        } else {
+            $type = $this->input->post('type', TRUE) === 'rundayan' ? 'rundayan' : 'individu';
+            $nominator = trim($this->input->post('nominator_name', TRUE));
+            $ancestor = trim($this->input->post('ancestor_name', TRUE));
+            
+            $candidates_input = [];
+            $raw_inputs = [];
+            for ($i = 1; $i <= 3; $i++) {
+                $cand = trim($this->input->post('candidate_name_' . $i, TRUE));
+                if (!empty($cand)) {
+                    $raw_inputs[] = strtolower($cand);
+                    $candidates_input[] = $cand;
+                }
+            }
+
+            if (empty($candidates_input)) {
+                $this->session->set_flashdata('error', 'Silakan isi minimal 1 nama calon.');
+                redirect('yayasan');
+            }
+
+            // Check if there are identical candidate names in the input fields
+            if (count(array_unique($raw_inputs)) < count($raw_inputs)) {
+                $this->session->set_flashdata('error', 'Pencalonan dibatalkan. Nama calon formatur 1, 2, dan 3 tidak boleh sama.');
+                redirect('yayasan');
+            }
+
+            $success_count = 0;
+            $failed_names = [];
+
+            foreach ($candidates_input as $cand) {
+                // Database Check: Same nominator cannot nominate the same candidate again
+                $this->db->where('LOWER(nominator_name) =', strtolower($nominator));
+                $this->db->where('LOWER(candidate_name) =', strtolower($cand));
+                $existing = $this->db->get('yayasan_candidates')->row_array();
+
+                if ($existing) {
+                    $failed_names[] = $cand;
+                    continue;
+                }
+
+                $insert_data = [
+                    'nominator_name'  => $nominator,
+                    'ancestor_name'   => $ancestor,
+                    'type'            => $type,
+                    'candidate_name'  => $cand,
+                    'description'     => '', // removed per request
+                    'votes_count'     => 1, // Start with 1 support
+                    'status'          => 'approved'
+                ];
+
+                $this->db->insert('yayasan_candidates', $insert_data);
+                $success_count++;
+            }
+
+            if ($success_count > 0) {
+                $msg = $success_count . ' calon berhasil didaftarkan.';
+                if (!empty($failed_names)) {
+                    $msg .= ' Beberapa nama dilewati karena sudah diusulkan sebelumnya.';
+                }
+                $this->session->set_flashdata('success', $msg);
+            } else {
+                $this->session->set_flashdata('error', 'Gagal mendaftarkan calon. Semua nama calon yang Anda isi sudah diusulkan sebelumnya.');
+            }
+            redirect('yayasan');
+        }
+    }
+
+
+    public function vote($id)
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        $candidate = $this->db->get_where('yayasan_candidates', ['id' => $id, 'status' => 'approved'])->row_array();
+        if (!$candidate) {
+            echo json_encode(['status' => 'error', 'message' => 'Calon tidak ditemukan atau belum disetujui.']);
+            return;
+        }
+
+        $ip = $this->input->ip_address();
+        $ua = $this->input->user_agent();
+
+        // 1. Check Cookie
+        $voted_cookie = $this->input->cookie('voted_candidates');
+        $voted_ids = $voted_cookie ? explode(',', $voted_cookie) : [];
+        if (in_array($id, $voted_ids)) {
+            echo json_encode(['status' => 'error', 'message' => 'Anda sudah memberikan suara untuk calon ini.']);
+            return;
+        }
+
+        // 2. Check Database log (by IP) within the last 24 hours to prevent spam
+        $this->db->where('candidate_id', $id);
+        $this->db->where('ip_address', $ip);
+        $this->db->where('voted_at >', date('Y-m-d H:i:s', time() - 86400));
+        $log_exists = $this->db->get('yayasan_votes_log')->num_rows() > 0;
+
+        if ($log_exists) {
+            echo json_encode(['status' => 'error', 'message' => 'Anda sudah memberikan suara untuk calon ini hari ini.']);
+            return;
+        }
+
+        // Write log
+        $this->db->insert('yayasan_votes_log', [
+            'candidate_id' => $id,
+            'ip_address'   => $ip,
+            'user_agent'   => $ua
+        ]);
+
+        // Increment vote count
+        $this->db->where('id', $id);
+        $this->db->set('votes_count', 'votes_count+1', FALSE);
+        $this->db->update('yayasan_candidates');
+
+        // Set cookie (valid for 30 days)
+        $voted_ids[] = $id;
+        $cookie_value = implode(',', $voted_ids);
+        $this->input->set_cookie([
+            'name'   => 'voted_candidates',
+            'value'  => $cookie_value,
+            'expire' => 30 * 86400,
+            'secure' => FALSE
+        ]);
+
+        // Fetch updated count
+        $updated_candidate = $this->db->get_where('yayasan_candidates', ['id' => $id])->row_array();
+
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Terima kasih! Suara Anda telah berhasil direkam.',
+            'votes_count' => $updated_candidate['votes_count']
+        ]);
+    }
+
+    public function detail($id)
+    {
+        $candidate = $this->db->get_where('yayasan_candidates', ['id' => $id, 'status' => 'approved'])->row_array();
+        if (!$candidate) {
+            show_404();
+            return;
+        }
+
+        // Fetch all nominations for this candidate (grouped context)
+        $all_nominations = $this->db->get_where('yayasan_candidates', [
+            'candidate_name' => $candidate['candidate_name'],
+            'ancestor_name'  => $candidate['ancestor_name'],
+            'status'         => 'approved'
+        ])->result_array();
+
+        // Total votes count is the count of nominations
+        $candidate['votes_count'] = count($all_nominations);
+
+        // Merge all distinct nominators
+        $nominators = array_unique(array_filter(array_map('trim', array_column($all_nominations, 'nominator_name'))));
+        $candidate['nominator_name'] = implode(', ', $nominators);
+
+        // Merge descriptions
+        $descriptions = array_unique(array_filter(array_map('trim', array_column($all_nominations, 'description'))));
+        $candidate['description'] = implode(' / ', $descriptions);
+
+        $data['candidate'] = $candidate;
+
+        // Determine if user is Dewan Pembina, admin, super_admin, or "Teguh" (administrator)
+        $is_authorized = false;
+        if ($this->session->userdata('logged_in')) {
+            $role = $this->session->userdata('role');
+            $username = strtolower($this->session->userdata('username') ?? '');
+            $full_name = strtolower($this->session->userdata('full_name') ?? '');
+            if (in_array($role, ['admin', 'super_admin', 'dewan_pembina']) || strpos($username, 'teguh') !== false || strpos($full_name, 'teguh') !== false) {
+                $is_authorized = true;
+            }
+        }
+        $data['is_authorized'] = $is_authorized;
+        
+        // Get list of voted candidate IDs from cookies
+        $voted_cookie = $this->input->cookie('voted_candidates');
+        $data['voted_ids'] = $voted_cookie ? explode(',', $voted_cookie) : [];
+
+        // 1. Trace parent chain (Upwards) - Who nominated this candidate (handles multiple nominators)
+        $parent_chain = [];
+        $visited = [];
+        
+        foreach ($nominators as $nominator) {
+            $current_nominator = $nominator;
+            $sub_chain = [];
+            while (!empty($current_nominator)) {
+                $parent = $this->db->get_where('yayasan_candidates', [
+                    'candidate_name' => $current_nominator,
+                    'status'         => 'approved'
+                ])->row_array();
+                
+                if ($parent) {
+                    if (!in_array($parent['id'], $visited)) {
+                        $sub_chain[] = $parent;
+                        $visited[] = $parent['id'];
+                        $current_nominator = $parent['nominator_name'];
+                    } else {
+                        break;
+                    }
+                } else {
+                    // If the nominator is not in candidate list, show them as root nominator (virtual node)
+                    $virtual_key = 'virtual_' . strtolower(trim($current_nominator));
+                    if (!in_array($virtual_key, $visited)) {
+                        $sub_chain[] = [
+                            'id'             => null,
+                            'candidate_name' => $current_nominator,
+                            'nominator_name' => '',
+                            'ancestor_name'  => $candidate['ancestor_name'],
+                            'virtual'        => true
+                        ];
+                        $visited[] = $virtual_key;
+                    }
+                    break;
+                }
+            }
+            $parent_chain = array_merge($parent_chain, array_reverse($sub_chain));
+        }
+        $data['parent_chain'] = $parent_chain;
+
+        // 2. Trace children (Downwards) - Who this candidate nominated
+        $data['nominated_by_this'] = $this->db->get_where('yayasan_candidates', [
+            'nominator_name' => $candidate['candidate_name'],
+            'status'         => 'approved'
+        ])->result_array();
+
+        $this->load->view('templates/header');
+        $this->load->view('partials/navbar');
+        $this->load->view('yayasan/detail', $data);
+        $this->load->view('templates/footer');
+    }
+}

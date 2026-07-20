@@ -1116,4 +1116,169 @@ class Admin extends CI_Controller
         redirect('admin/pekerja');
     }
 
+    // ================= KELOLA YAYASAN =================
+    
+    public function yayasan()
+    {
+        $search = $this->input->get('search', TRUE) ?? '';
+        $status = $this->input->get('status', TRUE) ?? '';
+
+        // Fetch raw candidates for management (Approve/Reject list)
+        if ($search) {
+            $this->db->group_start();
+            $this->db->like('candidate_name', $search);
+            $this->db->or_like('nominator_name', $search);
+            $this->db->or_like('ancestor_name', $search);
+            $this->db->group_end();
+        }
+
+        if ($status) {
+            $this->db->where('status', $status);
+        }
+
+        $this->db->order_by('created_at', 'DESC');
+        $raw_all_candidates = $this->db->get('yayasan_candidates')->result_array();
+
+        // Calculate Rekapitulasi Hasil (Approved Candidates Grouped)
+        $this->db->where('status', 'approved');
+        $raw_approved = $this->db->get('yayasan_candidates')->result_array();
+        
+        $grouped = [];
+        foreach ($raw_approved as $c) {
+            $key = strtolower(trim($c['candidate_name']));
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'id'             => $c['id'],
+                    'candidate_name' => $c['candidate_name'],
+                    'ancestor_name'  => $c['ancestor_name'],
+                    'type'           => $c['type'] ?? 'individu',
+                    'nominators'     => [trim($c['nominator_name'])],
+                    'ancestors'      => [trim($c['ancestor_name'])],
+                    'votes_count'    => 1,
+                    'ancestor_breakdown' => [trim($c['ancestor_name']) => 1]
+                ];
+            } else {
+                $grouped[$key]['nominators'][] = trim($c['nominator_name']);
+                $grouped[$key]['ancestors'][] = trim($c['ancestor_name']);
+                $grouped[$key]['votes_count'] += 1;
+                
+                $anc = trim($c['ancestor_name']);
+                if (!isset($grouped[$key]['ancestor_breakdown'][$anc])) {
+                    $grouped[$key]['ancestor_breakdown'][$anc] = 1;
+                } else {
+                    $grouped[$key]['ancestor_breakdown'][$anc] += 1;
+                }
+            }
+        }
+
+        $individu_candidates = [];
+        $rundayan_candidates = [];
+
+        foreach ($grouped as $g) {
+            $g['nominator_name'] = implode(', ', array_unique($g['nominators']));
+            $g['ancestor_name'] = implode(', ', array_unique($g['ancestors']));
+            
+            $breakdowns = [];
+            foreach ($g['ancestor_breakdown'] as $anc_name => $count) {
+                $breakdowns[] = htmlspecialchars($anc_name) . " (" . $count . " suara)";
+            }
+            $g['breakdown_text'] = implode(', ', $breakdowns);
+
+            if ($g['type'] === 'rundayan') {
+                $rundayan_candidates[] = $g;
+            } else {
+                $individu_candidates[] = $g;
+            }
+        }
+
+        usort($individu_candidates, function($a, $b) {
+            return $b['votes_count'] <=> $a['votes_count'];
+        });
+        usort($rundayan_candidates, function($a, $b) {
+            return $b['votes_count'] <=> $a['votes_count'];
+        });
+
+        $data = [
+            'admin_name'          => $this->session->userdata('full_name'),
+            'admin_role'          => $this->session->userdata('role'),
+            'active_menu'         => 'yayasan',
+            'candidates'          => $raw_all_candidates,
+            'individu_candidates' => $individu_candidates,
+            'rundayan_candidates' => $rundayan_candidates,
+            'search'              => $search,
+            'status'              => $status
+        ];
+
+        $this->load->view('admin/yayasan/index', $data);
+    }
+
+    public function yayasan_edit($id)
+    {
+        $candidate = $this->db->get_where('yayasan_candidates', ['id' => $id])->row_array();
+        if (!$candidate) {
+            show_404();
+            return;
+        }
+
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('nominator_name', 'Nama Pencalon', 'required|trim');
+        $this->form_validation->set_rules('ancestor_name', 'Undayan / Buyut', 'required|trim');
+        $this->form_validation->set_rules('candidate_name', 'Nama Calon', 'required|trim');
+        $this->form_validation->set_rules('votes_count', 'Jumlah Suara', 'required|integer');
+
+        if ($this->form_validation->run() == FALSE) {
+            $data = [
+                'admin_name'  => $this->session->userdata('full_name'),
+                'admin_role'  => $this->session->userdata('role'),
+                'active_menu' => 'yayasan',
+                'candidate'   => $candidate
+            ];
+            $this->load->view('admin/yayasan/edit', $data);
+        } else {
+            $update_data = [
+                'nominator_name'  => $this->input->post('nominator_name', TRUE),
+                'ancestor_name'   => $this->input->post('ancestor_name', TRUE),
+                'candidate_name'  => $this->input->post('candidate_name', TRUE),
+                'description'     => $this->input->post('description', TRUE),
+                'status'          => $this->input->post('status', TRUE),
+                'votes_count'     => (int) $this->input->post('votes_count', TRUE)
+            ];
+
+            $this->db->where('id', $id)->update('yayasan_candidates', $update_data);
+
+            $this->_log_action('Mengedit data calon yayasan: ' . $update_data['candidate_name']);
+            $this->session->set_flashdata('success', 'Data calon berhasil diperbarui.');
+            redirect('admin/yayasan');
+        }
+    }
+
+    public function yayasan_delete($id)
+    {
+        $candidate = $this->db->get_where('yayasan_candidates', ['id' => $id])->row_array();
+        if ($candidate) {
+            $this->db->where('id', $id)->delete('yayasan_candidates');
+            $this->_log_action('Menghapus data calon yayasan: ' . $candidate['candidate_name']);
+            $this->session->set_flashdata('success', 'Data calon berhasil dihapus.');
+        } else {
+            $this->session->set_flashdata('error', 'Data tidak ditemukan.');
+        }
+        redirect('admin/yayasan');
+    }
+
+    public function yayasan_update_status($id, $status)
+    {
+        if (!in_array($status, ['pending', 'approved', 'rejected'])) {
+            show_404();
+            return;
+        }
+
+        $candidate = $this->db->get_where('yayasan_candidates', ['id' => $id])->row_array();
+        if ($candidate) {
+            $this->db->where('id', $id)->update('yayasan_candidates', ['status' => $status]);
+            $this->_log_action('Mengubah status calon yayasan ' . $candidate['candidate_name'] . ' menjadi ' . $status);
+            $this->session->set_flashdata('success', 'Status calon berhasil diperbarui.');
+        }
+        redirect('admin/yayasan');
+    }
+
 }
