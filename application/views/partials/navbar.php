@@ -23,7 +23,7 @@
             </li>
             <!-- <li>
                 <a href="" class="relative py-2 hover:text-white transition-colors duration-300 group">
-                    Yayasan
+                    Anggota
                     <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
                 </a>
             </li> -->
@@ -128,7 +128,7 @@
                 <a href="<?= base_url('Wasiat') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="wasiat"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><?php if ($this->session->userdata('logged_in')): ?><img src="<?= base_url('assets/images/3d_wasiat.png') ?>" class="w-7 h-7 inline-block mr-2 align-middle object-contain" alt="Wasiat"><?php endif; ?>Wasiat alm. H.M Samhudi</a>
             </li>
             <li>
-                <a href="<?= base_url('yayasan') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="yayasan"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><?php if ($this->session->userdata('logged_in')): ?><img src="<?= base_url('assets/images/3d_yayasan.png') ?>" class="w-7 h-7 inline-block mr-2 align-middle object-contain" alt="Yayasan"><?php endif; ?>Yayasan</a>
+                <a href="<?= base_url('anggota') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="anggota"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><?php if ($this->session->userdata('logged_in')): ?><img src="<?= base_url('assets/images/3d_yayasan.png') ?>" class="w-7 h-7 inline-block mr-2 align-middle object-contain" alt="Anggota"><?php endif; ?>Anggota</a>
             </li>
             <li>
                 <a href="<?= base_url('Familytree') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="familytree"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><?php if ($this->session->userdata('logged_in')): ?><img src="<?= base_url('assets/images/3d_silsilah.png') ?>" class="w-7 h-7 inline-block mr-2 align-middle object-contain" alt="Silsilah Keluarga"><?php endif; ?>Silsilah Keluarga</a>

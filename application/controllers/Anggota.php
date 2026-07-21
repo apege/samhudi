@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Yayasan extends CI_Controller {
+class Anggota extends CI_Controller {
 
     public function __construct()
     {
@@ -143,7 +143,7 @@ class Yayasan extends CI_Controller {
 
         if ($this->form_validation->run() == FALSE) {
             $this->session->set_flashdata('error', validation_errors(' ', ' '));
-            redirect('yayasan');
+            redirect('anggota');
         } else {
             $type = $this->input->post('type', TRUE) === 'rundayan' ? 'rundayan' : 'individu';
             $nominator = trim($this->input->post('nominator_name', TRUE));
@@ -161,13 +161,13 @@ class Yayasan extends CI_Controller {
 
             if (empty($candidates_input)) {
                 $this->session->set_flashdata('error', 'Silakan isi minimal 1 nama calon.');
-                redirect('yayasan');
+                redirect('anggota');
             }
 
             // Check if there are identical candidate names in the input fields
             if (count(array_unique($raw_inputs)) < count($raw_inputs)) {
                 $this->session->set_flashdata('error', 'Pencalonan dibatalkan. Nama calon formatur 1, 2, dan 3 tidak boleh sama.');
-                redirect('yayasan');
+                redirect('anggota');
             }
 
             $success_count = 0;
@@ -189,7 +189,7 @@ class Yayasan extends CI_Controller {
                     'ancestor_name'   => $ancestor,
                     'type'            => $type,
                     'candidate_name'  => $cand,
-                    'description'     => '', // removed per request
+                    'description'     => '',
                     'votes_count'     => 1, // Start with 1 support
                     'status'          => 'approved'
                 ];
@@ -207,7 +207,7 @@ class Yayasan extends CI_Controller {
             } else {
                 $this->session->set_flashdata('error', 'Gagal mendaftarkan calon. Semua nama calon yang Anda isi sudah diusulkan sebelumnya.');
             }
-            redirect('yayasan');
+            redirect('anggota');
         }
     }
 

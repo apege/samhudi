@@ -16,9 +16,9 @@ $theme_dark_text = $is_rundayan ? 'text-slate-950' : 'text-teal-950';
 
 $section_title = $is_rundayan ? 'Pencalonan Rundayan' : 'Pencalonan Individu';
 $section_icon = $is_rundayan ? 'bi-people-fill' : 'bi-person-fill';
-$form_action_url = $is_rundayan ? base_url('rundayan/nominate') : base_url('yayasan/nominate');
-$search_action_url = $is_rundayan ? base_url('rundayan') : base_url('yayasan');
-$detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'yayasan/detail/';
+$form_action_url = $is_rundayan ? base_url('rundayan/nominate') : base_url('anggota/nominate');
+$search_action_url = $is_rundayan ? base_url('rundayan') : base_url('anggota');
+$detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'anggota/detail/';
 
 // Group candidates by ancestor for the chart silsilah tab
 $grouped_candidates = [];
@@ -59,7 +59,7 @@ if (!function_exists('render_tree_node')) {
         $page_type = isset($GLOBALS['page_type']) ? $GLOBALS['page_type'] : 'individu';
         $is_rundayan = ($page_type === 'rundayan');
         $theme_primary = $is_rundayan ? 'cyan' : 'amber';
-        $detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'yayasan/detail/';
+        $detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'anggota/detail/';
         ?>
         <div class="flex flex-col gap-3">
             <!-- Candidate Node Card -->
@@ -119,6 +119,12 @@ if (!function_exists('format_nominators')) {
             <p class="mt-3 text-lg text-emerald-100/80 max-w-2xl mx-auto">
                 Lihat daftar nama kandidat, siapa yang mencalonkannya, alur pencalonan kandidat, dan bagikan informasi calon.
             </p>
+            <?php if ($is_rundayan): ?>
+                <p class="mt-4 text-xs sm:text-sm text-cyan-300 max-w-2xl mx-auto font-medium leading-relaxed bg-cyan-950/40 border border-cyan-500/20 px-5 py-3.5 rounded-2xl flex items-start gap-2.5 shadow-sm text-left sm:text-center">
+                    <i class="bi bi-info-circle-fill text-cyan-400 text-base shrink-0 mt-0.5 sm:mt-0"></i>
+                    <span>Pengusulan rundayan hanya 1 paket (3 nama) untuk setiap rundayan / keluarga besar gen 2. Sehingga diperlukan kesepakatan dari keluarga tersebut untuk memunculkan 3 nama.</span>
+                </p>
+            <?php endif; ?>
         </div>
 
         <!-- Success/Error Alert messages -->
@@ -806,7 +812,7 @@ if (!function_exists('format_nominators')) {
     }
 
     function showQRModal(id, name) {
-        const shareUrl = "<?= base_url($page_type === 'rundayan' ? 'rundayan' : 'yayasan') ?>";
+        const shareUrl = "<?= base_url($page_type === 'rundayan' ? 'rundayan' : 'anggota') ?>";
         document.getElementById('shareTargetName').textContent = name;
         document.getElementById('shareLinkInput').value = shareUrl;
         
@@ -885,7 +891,7 @@ if (!function_exists('format_nominators')) {
 
     let toastTimeout = null;
     function copyNomineeLink(id) {
-        const shareUrl = "<?= base_url($page_type === 'rundayan' ? 'rundayan' : 'yayasan') ?>";
+        const shareUrl = "<?= base_url($page_type === 'rundayan' ? 'rundayan' : 'anggota') ?>";
         copyTextToClipboard(shareUrl).then(() => {
             const toast = document.getElementById('toastNotification');
             toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
@@ -914,7 +920,7 @@ if (!function_exists('format_nominators')) {
         // Show loading spinner
         btnElement.innerHTML = `<span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span> Processing...`;
 
-        fetch("<?= base_url('yayasan/vote/') ?>" + id, {
+        fetch("<?= base_url('anggota/vote/') ?>" + id, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'

@@ -5,8 +5,8 @@ $page_type = $page_type ?? 'individu';
 $is_rundayan = ($page_type === 'rundayan');
 $theme_primary = $is_rundayan ? 'cyan' : 'amber';
 $theme_dark_text = $is_rundayan ? 'text-slate-950' : 'text-teal-950';
-$detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'yayasan/detail/';
-$back_url = $is_rundayan ? base_url('rundayan') : base_url('yayasan');
+$detail_base_url = $is_rundayan ? 'rundayan/detail/' : 'anggota/detail/';
+$back_url = $is_rundayan ? base_url('rundayan') : base_url('anggota');
 $candidate_detail_url = base_url($detail_base_url . $candidate['id']);
 ?>
 
