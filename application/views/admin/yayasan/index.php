@@ -169,14 +169,30 @@ if (!function_exists('render_custom_pagination')) {
 </head>
 <body class="bg-teal-950 text-white font-body h-screen flex overflow-hidden">
 
-    <!-- Sidebar -->
-    <?php $this->load->view('admin/sidebar'); ?>
+    <!-- Sidebar removed as requested: Halaman khusus laporan hasil rekapitulasi -->
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
         
-        <!-- Header -->
-        <?php $this->load->view('admin/header'); ?>
+        <!-- Header (Tanpa Hamburger Menu) -->
+        <header class="h-20 bg-gradient-to-r from-[#374D49] to-[#3E6C65] border-b border-[#4D6B67]/30 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-md">
+            <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+                <div class="min-w-0">
+                    <h1 class="font-display font-bold text-sm sm:text-lg text-white truncate">Dashboard Overview</h1>
+                    <p class="text-[10px] sm:text-xs text-white/80 mt-0.5 truncate">Selamat datang, <?= htmlspecialchars($admin_name ?? 'Admin Utama') ?></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <button id="theme-toggle" class="text-white hover:text-gray-300 focus:outline-none p-2 rounded-full hover:bg-white/10 transition-colors shrink-0" title="Toggle Tema">
+                    <i id="theme-icon" class="bi bi-moon-stars text-base"></i>
+                </button>
+                <button onclick="window.location.reload();" class="flex items-center gap-1.5 border border-white/20 bg-white/10 hover:bg-white/20 text-[#E3E3E3] hover:text-white p-2.5 sm:px-4 sm:py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shadow-sm backdrop-blur-sm shrink-0" title="Refresh Halaman">
+                    <i class="bi bi-arrow-clockwise text-sm"></i>
+                    <span class="hidden sm:inline">Refresh</span>
+                </button>
+            </div>
+        </header>
 
         <!-- Content Area -->
         <div class="p-4 md:p-8 space-y-8">
@@ -236,183 +252,9 @@ if (!function_exists('render_custom_pagination')) {
                 </div>
             </div>
 
-            <!-- Filters & Search -->
-            <div class="bg-brand-dark/20 border border-brand-medium/20 rounded-2xl p-6 shadow-sm">
-                <form method="GET" action="<?= base_url('admin/yayasan') ?>" class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                    
-                    <!-- Search Input -->
-                    <div class="relative md:col-span-8">
-                        <i class="bi bi-search absolute left-4 top-3.5 text-white/40"></i>
-                        <input type="text" name="search" id="input_search_main" value="<?= htmlspecialchars($search) ?>" autocomplete="off" placeholder="Cari nama calon, yayasan, buyut..." class="w-full bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:border-brand-medium transition-all">
-                        <div id="search_main_suggestions_box" class="absolute left-0 right-0 top-full mt-1 bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-[11000] divide-y divide-white/5"></div>
-                    </div>
 
-                    <!-- Status Filter -->
-                    <div class="md:col-span-3">
-                        <select name="status" class="w-full bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-brand-medium transition-all">
-                            <option value="">Semua Status</option>
-                            <option value="pending" <?= ($status ?? '') === 'pending' ? 'selected' : '' ?>>Pending</option>
-                            <option value="approved" <?= ($status ?? '') === 'approved' ? 'selected' : '' ?>>Approved</option>
-                            <option value="rejected" <?= ($status ?? '') === 'rejected' ? 'selected' : '' ?>>Rejected</option>
-                        </select>
-                    </div>
 
-                    <!-- Filter Button -->
-                    <div class="md:col-span-1">
-                        <button type="submit" class="w-full h-full bg-brand-medium hover:bg-brand-medium/90 border border-brand-medium text-white rounded-xl flex items-center justify-center transition-all py-3">
-                            <i class="bi bi-funnel-fill"></i>
-                        </button>
-                    </div>
 
-                </form>
-            </div>
-
-            <!-- Table Card -->
-            <div class="bg-gradient-to-b from-brand-dark/20 to-brand-dark/5 border border-brand-medium/20 rounded-2xl p-6 shadow-lg">
-                <div class="overflow-x-auto">
-                    <table id="table_main" class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-[#4D6B67]/20">
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Calon</th>
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Pencalon</th>
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Undayan / Buyut</th>
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Jenis</th>
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Jumlah Suara</th>
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Status</th>
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap">Tanggal Masuk</th>
-                                <th class="pb-4 px-4 text-xs font-bold text-white/40 uppercase tracking-wider whitespace-nowrap text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-[#4D6B67]/10">
-                            <?php if (!empty($candidates)): ?>
-                                <?php foreach ($candidates as $c): ?>
-                                    <tr>
-                                        <!-- Candidate Name -->
-                                        <td class="py-4 px-4 whitespace-nowrap">
-                                            <div class="font-bold text-white"><?= htmlspecialchars($c['candidate_name']) ?></div>
-                                            <div class="text-xs text-brand-light/60 max-w-xs truncate" title="<?= htmlspecialchars($c['description'] ?? '') ?>">
-                                                <?= htmlspecialchars($c['description'] ?: 'Tidak ada keterangan') ?>
-                                            </div>
-                                        </td>
-                                        
-                                        <!-- Nominator Name -->
-                                        <td class="py-4 px-4 whitespace-nowrap text-sm text-brand-light">
-                                            <?= htmlspecialchars($c['nominator_name']) ?>
-                                        </td>
-
-                                        <!-- Ancestor Name -->
-                                        <td class="py-4 px-4 whitespace-nowrap text-sm text-brand-light">
-                                            <span class="rundayan-hover text-emerald-300 font-semibold" onmouseenter="showRundayanHover(event, '<?= htmlspecialchars(addslashes($c['ancestor_name'])) ?>')" onmouseleave="hideRundayanHover()">
-                                                <?= htmlspecialchars($c['ancestor_name']) ?>
-                                            </span>
-                                        </td>
-
-                                        <!-- Type -->
-                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
-                                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold <?= ($c['type'] ?? 'individu') === 'rundayan' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30' ?>">
-                                                 <?= ucfirst(htmlspecialchars($c['type'] ?? 'individu')) ?>
-                                             </span>
-                                        </td>
-
-                                        <!-- Votes Count -->
-                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
-                                            <span class="px-3 py-1 rounded bg-[#112426] border border-amber-500/20 text-amber-400 font-extrabold text-base">
-                                                <?= $c['votes_count'] ?>
-                                            </span>
-                                        </td>
-
-                                        <!-- Status Badge -->
-                                        <td class="py-4 px-4 whitespace-nowrap text-sm">
-                                            <?php if ($c['status'] == 'approved'): ?>
-                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Approved</span>
-                                            <?php elseif ($c['status'] == 'rejected'): ?>
-                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/30">Rejected</span>
-                                            <?php else: ?>
-                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 flex items-center w-max gap-1">
-                                                    <i class="bi bi-hourglass-split"></i> Pending
-                                                </span>
-                                            <?php endif; ?>
-                                        </td>
-
-                                        <!-- Created At -->
-                                        <td class="py-4 px-4 whitespace-nowrap text-sm text-brand-light/70">
-                                            <?= date('d M Y H:i', strtotime($c['created_at'])) ?>
-                                        </td>
-
-                                        <!-- Actions -->
-                                        <td class="py-4 px-4 text-right space-x-2 whitespace-nowrap">
-                                            <?php if ($c['status'] !== 'approved'): ?>
-                                                <a href="<?= base_url('admin/yayasan/status/' . $c['id'] . '/approved') ?>" 
-                                                   onclick="showConfirm(event, this.href, 'Setujui pencalonan ini agar tampil di halaman voting?')" 
-                                                   class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 transition-all text-xs font-bold">
-                                                    <i class="bi bi-check-lg mr-1"></i> Approve
-                                                </a>
-                                            <?php endif; ?>
-                                            <?php if ($c['status'] !== 'rejected'): ?>
-                                                <a href="<?= base_url('admin/yayasan/status/' . $c['id'] . '/rejected') ?>" 
-                                                   onclick="showConfirm(event, this.href, 'Tolak pencalonan ini?')" 
-                                                   class="inline-flex items-center justify-center px-3 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black border border-yellow-500/20 transition-all text-xs font-bold">
-                                                    <i class="bi bi-x-lg mr-1"></i> Reject
-                                                </a>
-                                            <?php endif; ?>
-                                            
-                                            <a href="<?= base_url('admin/yayasan/edit/' . $c['id']) ?>" 
-                                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black border border-yellow-500/20 transition-all" title="Edit">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a>
-                                            <a href="<?= base_url('admin/yayasan/delete/' . $c['id']) ?>" 
-                                               onclick="showConfirm(event, this.href, 'Apakah Anda yakin ingin menghapus calon ini? Seluruh data suara akan terhapus.')" 
-                                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-brand-red/10 text-brand-red hover:bg-brand-red hover:text-white border border-brand-red/20 transition-all">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="8" class="py-8 text-center text-white/40 text-sm">Belum ada data pencalonan ketua yayasan.</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <?php if (isset($this->pagination) && !empty($this->pagination->create_links())): ?>
-                    <div class="mt-6 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-4 sm:flex-row">
-                        <span class="text-xs text-white/55">
-                            Menampilkan <?= count($candidates) ?> dari <?= $total_rows ?> data pencalonan
-                        </span>
-                        <?= $this->pagination->create_links() ?>
-                    </div>
-                <?php endif; ?>
-
-            </div>
-
-            <!-- SECTION: CHART 3D PIE (REKAPITULASI DUKUNGAN ADMIN) -->
-            <div class="bg-gradient-to-b from-[#182c29] to-[#122220] border border-teal-700/40 rounded-2xl p-6 shadow-xl space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-teal-700/30 pb-4">
-                    <div>
-                        <h3 class="font-display font-bold text-xl text-white flex items-center gap-2">
-                            <i class="bi bi-pie-chart-fill text-amber-400"></i> Chart 3D Pie Rekapitulasi Suara
-                        </h3>
-                        <p class="text-xs text-white/60 mt-0.5">Grafik 3D perolehan suara pencalonan ketua yayasan.</p>
-                    </div>
-                    <!-- Chart Type Switcher Buttons -->
-                    <div class="flex bg-black/40 p-1 rounded-xl border border-white/10 text-xs">
-                        <button id="btn_chart_individu" onclick="switchChart('individu')" class="px-4 py-1.5 rounded-lg font-bold transition-all bg-emerald-500 text-white shadow">
-                            Individu
-                        </button>
-                        <button id="btn_chart_rundayan" onclick="switchChart('rundayan')" class="px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all">
-                            Rundayan
-                        </button>
-                    </div>
-                </div>
-
-                <div class="relative min-h-[380px] flex items-center justify-center">
-                    <div id="container_chart_3d" class="w-full h-[400px]"></div>
-                </div>
-            </div>
 
             <!-- Rekapitulasi Hasil Pencalonan (Admin Only) -->
             <div class="mt-12 space-y-8">

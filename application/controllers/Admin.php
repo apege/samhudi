@@ -11,6 +11,11 @@ class Admin extends CI_Controller
         $this->load->model('Admin_model');
         $this->load->model('Log_model');
 
+        // Akses langsung tanpa login khusus untuk laporan yayasan (Dewan Pembina)
+        if ($this->router->fetch_method() === 'yayasan') {
+            return;
+        }
+
         // Proteksi Halaman Admin: Hanya untuk role admin atau super_admin
         if (!$this->session->userdata('logged_in')) {
             redirect('auth');
