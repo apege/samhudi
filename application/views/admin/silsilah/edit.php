@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Anggota Silsilah | Admin Panel</title>
+    <link rel="icon" type="image/jpeg" href="<?= base_url('assets/favicon.jpeg') ?>">
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -113,7 +114,7 @@
                             <!-- Generasi -->
                             <div>
                                 <label class="block text-xs font-semibold text-white/70 mb-2 uppercase tracking-wide">Generasi</label>
-                                <input type="number" name="generasi" min="1" max="10" placeholder="Kosongkan untuk otomatis" value="<?= set_value('generasi', $member['generasi']) ?>" class="w-full bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-brand-medium transition-all">
+                                <input type="number" name="generasi" min="1" max="25" placeholder="Kosongkan untuk otomatis" value="<?= set_value('generasi', $member['generasi']) ?>" class="w-full bg-[#1A2824] border border-[#4D6B67]/30 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-brand-medium transition-all">
                             </div>
 
                             <!-- Hubungkan Akun Pengguna -->
