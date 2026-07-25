@@ -236,21 +236,30 @@ if (!function_exists('render_custom_pagination')) {
                         </h3>
                         <p class="text-xs text-white/60 mt-0.5">Grafik 3D perolehan suara pencalonan ketua yayasan.</p>
                     </div>
-                    <!-- Chart Type Switcher Buttons -->
-                    <div class="flex bg-black/40 p-1 rounded-xl border border-white/10 text-xs">
-                        <button id="btn_chart_individu" onclick="switchChart('individu')" class="px-4 py-1.5 rounded-lg font-bold transition-all bg-emerald-500 text-white shadow">
-                            Individu
-                        </button>
-                        <button id="btn_chart_rundayan" onclick="switchChart('rundayan')" class="px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all">
-                            Rundayan
+                    <div class="flex items-center gap-2">
+                        <!-- Chart Type Switcher Buttons -->
+                        <div class="flex bg-black/40 p-1 rounded-xl border border-white/10 text-xs">
+                            <button id="btn_chart_individu" onclick="switchChart('individu')" class="px-4 py-1.5 rounded-lg font-bold transition-all bg-emerald-500 text-white shadow">
+                                Individu
+                            </button>
+                            <button id="btn_chart_rundayan" onclick="switchChart('rundayan')" class="px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all">
+                                Rundayan
+                            </button>
+                        </div>
+                        <!-- Fullscreen Button -->
+                        <button onclick="openChartFullscreen()" title="Fullscreen" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-white text-xs font-semibold transition-all">
+                            <i class="bi bi-fullscreen text-sm"></i>
+                            <span class="hidden sm:inline">Fullscreen</span>
                         </button>
                     </div>
                 </div>
 
                 <div class="relative min-h-[380px] flex items-center justify-center">
-                    <div id="container_chart_3d" class="w-full h-[400px]"></div>
+                    <div id="container_chart_3d" class="w-full h-[400px]" style="touch-action: manipulation;"></div>
                 </div>
             </div>
+
+
 
 
 
@@ -709,7 +718,15 @@ if (!function_exists('render_custom_pagination')) {
                         alpha: 45,
                         beta: 0
                     },
-                    backgroundColor: 'transparent'
+                    backgroundColor: 'transparent',
+                    events: {
+                        click: function() {
+                            if (this.tooltip) this.tooltip.hide();
+                            if (this.getSelectedPoints) {
+                                this.getSelectedPoints().forEach(p => p.select(false));
+                            }
+                        }
+                    }
                 },
                 title: {
                     text: titleText,
@@ -724,10 +741,32 @@ if (!function_exists('render_custom_pagination')) {
                     text: 'Arahkan kursor ke grafik untuk melihat rincian pemilih & pengusul',
                     style: { color: 'rgba(255,255,255,0.7)', fontSize: '11px' }
                 },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        depth: window.innerWidth < 640 ? 30 : 35,
+                        size: window.innerWidth < 640 ? '90%' : '75%',
+                        showInLegend: true,
+                        dataLabels: {
+                            enabled: window.innerWidth >= 640,
+                            format: '<b>{point.name}</b><br>{point.y} suara ({point.percentage:.1f}%)',
+                            style: {
+                                color: '#FFFFFF',
+                                textOutline: '2px #000000',
+                                fontFamily: 'Inter',
+                                fontSize: '12px',
+                                fontWeight: '700'
+                            }
+                        }
+                    }
+                },
                 legend: {
                     enabled: true,
+                    labelFormat: window.innerWidth < 640 ? '<b>{name}</b>: {y} suara ({percentage:.0f}%)' : '{name}',
                     itemStyle: {
                         color: '#FFFFFF',
+                        fontFamily: 'Inter',
                         fontWeight: '600',
                         fontSize: '12px'
                     },
@@ -736,6 +775,7 @@ if (!function_exists('render_custom_pagination')) {
                     }
                 },
                 tooltip: {
+                    enabled: true,
                     useHTML: true,
                     backgroundColor: '#152421',
                     borderColor: '#4D6B67',
@@ -754,25 +794,6 @@ if (!function_exists('render_custom_pagination')) {
                         }
                         html += `</div>`;
                         return html;
-                    }
-                },
-                plotOptions: {
-                    pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        depth: 35,
-                        showInLegend: true,
-                        dataLabels: {
-                            enabled: true,
-                            format: '<b>{point.name}</b><br>{point.y} suara ({point.percentage:.1f}%)',
-                            style: {
-                                color: '#FFFFFF',
-                                textOutline: '2px #000000',
-                                fontFamily: 'Inter',
-                                fontSize: '12px',
-                                fontWeight: '700'
-                            }
-                        }
                     }
                 },
                 colors: getDistinctColorsForData(dataSeries),
@@ -797,6 +818,108 @@ if (!function_exists('render_custom_pagination')) {
                 render3DPieChart(chartDataRundayan, 'Perolehan Suara Kandidat Rundayan');
             }
         }
+
+        // FULLSCREEN CHART
+        let fsChartInstance = null;
+        let currentChartType = 'individu';
+
+        function render3DPieChartFS(dataSeries, titleText) {
+            if (fsChartInstance) { fsChartInstance.destroy(); fsChartInstance = null; }
+
+            const isMobile = window.innerWidth < 640;
+
+            fsChartInstance = Highcharts.chart('container_chart_3d_fs', {
+                chart: {
+                    type: 'pie',
+                    options3d: { enabled: true, alpha: 45, beta: 0 },
+                    backgroundColor: 'transparent',
+                    animation: { duration: 400 },
+                    events: {
+                        click: function() {
+                            if (this.tooltip) this.tooltip.hide();
+                            if (this.getSelectedPoints) {
+                                this.getSelectedPoints().forEach(p => p.select(false));
+                            }
+                        }
+                    }
+                },
+                title: {
+                    text: titleText,
+                    style: { 
+                        color: '#FFFFFF', 
+                        fontFamily: 'Plus Jakarta Sans', 
+                        fontWeight: '800', 
+                        fontSize: isMobile ? '15px' : '22px' 
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    pointFormat: '<b>{point.name}</b><br>Suara: <b>{point.y}</b> ({point.percentage:.1f}%)<br>Pendukung: <b>{point.nominators}</b><br>Rundayan: <b>{point.ancestors}</b>',
+                    backgroundColor: 'rgba(15,30,28,0.95)',
+                    borderColor: '#4D6B67',
+                    style: { color: '#FFFFFF', fontSize: isMobile ? '13px' : '15px' }
+                },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        depth: isMobile ? 40 : 45,
+                        size: isMobile ? '90%' : '80%',
+                        innerSize: '0%',
+                        showInLegend: true,
+                        dataLabels: {
+                            enabled: !isMobile,
+                            format: '<b>{point.name}</b><br>{point.y} suara ({point.percentage:.1f}%)',
+                            style: { color: '#FFFFFF', textOutline: '2px #000000', fontFamily: 'Inter', fontSize: '13px', fontWeight: '700' }
+                        }
+                    }
+                },
+                legend: {
+                    enabled: true,
+                    labelFormat: isMobile ? '<b>{name}</b>: {y} suara ({percentage:.0f}%)' : '{name}',
+                    itemStyle: { color: '#FFFFFF', fontSize: isMobile ? '12px' : '13px', fontWeight: '600' },
+                    itemHoverStyle: { color: '#10B981' }
+                },
+                colors: getDistinctColorsForData(dataSeries),
+                series: [{ name: 'Dukungan', data: dataSeries }]
+            });
+        }
+
+        function fsSwitchChart(type) {
+            currentChartType = type;
+            const fsBtnI = document.getElementById('fs_btn_individu');
+            const fsBtnR = document.getElementById('fs_btn_rundayan');
+            if (type === 'individu') {
+                fsBtnI.className = "px-4 py-1.5 rounded-lg font-bold transition-all bg-emerald-500 text-white shadow";
+                fsBtnR.className = "px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all";
+                render3DPieChartFS(chartDataIndividu, 'Perolehan Suara Kandidat Individu');
+            } else {
+                fsBtnR.className = "px-4 py-1.5 rounded-lg font-bold transition-all bg-cyan-500 text-white shadow";
+                fsBtnI.className = "px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all";
+                render3DPieChartFS(chartDataRundayan, 'Perolehan Suara Kandidat Rundayan');
+            }
+        }
+
+        function openChartFullscreen() {
+            const modal = document.getElementById('chart_fullscreen_modal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            // Sync current type
+            fsSwitchChart(currentChartType);
+        }
+
+        function closeChartFullscreen() {
+            const modal = document.getElementById('chart_fullscreen_modal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            if (fsChartInstance) { fsChartInstance.destroy(); fsChartInstance = null; }
+        }
+
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeChartFullscreen();
+        });
+
 
         // HOVER RUNDAYAN TOOLTIP INTERACTION
         function showRundayanHover(e, ancName) {
@@ -952,5 +1075,45 @@ if (!function_exists('render_custom_pagination')) {
             }
         });
     </script>
+    <!-- FULLSCREEN CHART MODAL (Placed at root level so header won't overlap) -->
+    <div id="chart_fullscreen_modal" class="fixed inset-0 z-[999999] hidden flex items-center justify-center bg-black/90 backdrop-blur-md">
+        <div class="relative w-full h-full flex flex-col bg-[#0e1f1d]">
+            <!-- Fullscreen Header Responsive -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-teal-700/40 shrink-0 bg-[#122422] gap-2.5 sm:gap-4">
+                <div class="flex items-center justify-between w-full sm:w-auto">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <i class="bi bi-pie-chart-fill text-amber-400 text-base sm:text-lg shrink-0"></i>
+                        <div class="min-w-0">
+                            <h3 class="font-display font-bold text-white text-sm sm:text-lg truncate">Chart 3D Pie Suara</h3>
+                            <p class="text-[10px] sm:text-xs text-white/50 hidden sm:block">Grafik 3D perolehan suara pencalonan ketua yayasan.</p>
+                        </div>
+                    </div>
+                    <!-- Button Tutup Mobile -->
+                    <button onclick="closeChartFullscreen()" title="Tutup Fullscreen" class="sm:hidden flex items-center gap-1 px-2.5 py-1.5 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 rounded-lg text-red-300 text-xs font-semibold transition-all shrink-0">
+                        <i class="bi bi-fullscreen-exit text-xs"></i>
+                        <span>Tutup</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                    <!-- Switcher inside fullscreen -->
+                    <div class="flex bg-black/40 p-1 rounded-xl border border-white/10 text-xs flex-1 sm:flex-none justify-center">
+                        <button id="fs_btn_individu" onclick="fsSwitchChart('individu')" class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg font-bold transition-all bg-emerald-500 text-white shadow text-center">Individu</button>
+                        <button id="fs_btn_rundayan" onclick="fsSwitchChart('rundayan')" class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all text-center">Rundayan</button>
+                    </div>
+                    <!-- Button Tutup Desktop -->
+                    <button onclick="closeChartFullscreen()" title="Tutup Fullscreen" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 rounded-xl text-red-300 text-xs font-semibold transition-all shrink-0">
+                        <i class="bi bi-fullscreen-exit text-sm"></i>
+                        <span>Tutup</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Fullscreen Chart Container -->
+            <div class="flex-1 flex items-center justify-center p-2 sm:p-4 min-h-0">
+                <div id="container_chart_3d_fs" class="w-full h-full" style="touch-action: manipulation;"></div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

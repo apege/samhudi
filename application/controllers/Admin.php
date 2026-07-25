@@ -1253,7 +1253,27 @@ class Admin extends CI_Controller
         usort($individu_candidates, function($a, $b) {
             return $b['votes_count'] <=> $a['votes_count'];
         });
-        usort($rundayan_candidates, function($a, $b) {
+
+        // Urutan Rundayan sesuai ketetapan yayasan
+        // 1. Tuti Suprapti Samhudi
+        // 2. Kartini Samhudi
+        // 3. Enden Kardinah
+        // 4. Kamil Samhudi
+        $rundayan_order = [
+            'tuti suprapti samhudi' => 1,
+            'kartini samhudi'       => 2,
+            'enden kardinah'        => 3,
+            'kamil samhudi'         => 4,
+        ];
+        usort($rundayan_candidates, function($a, $b) use ($rundayan_order) {
+            $anc_a = strtolower(trim($a['ancestor_name']));
+            $anc_b = strtolower(trim($b['ancestor_name']));
+            $order_a = $rundayan_order[$anc_a] ?? 999;
+            $order_b = $rundayan_order[$anc_b] ?? 999;
+            if ($order_a !== $order_b) {
+                return $order_a <=> $order_b;
+            }
+            // Jika rundayan sama, urutkan berdasarkan votes terbanyak
             return $b['votes_count'] <=> $a['votes_count'];
         });
 
