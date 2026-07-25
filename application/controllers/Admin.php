@@ -58,28 +58,64 @@ class Admin extends CI_Controller
 
         if ($this->input->method() === 'post' && $this->input->post('save_carousel')) {
             $carousel = json_decode(file_get_contents($carousel_config_path), true);
-            $captions = $this->input->post('captions') ?: [];
+            $captions     = $this->input->post('captions') ?: [];
+            $item_colors  = $this->input->post('carousel_item_color') ?: [];
+            $item_frames  = $this->input->post('carousel_item_frame') ?: [];
 
             $upload_path = $images_path . 'family/';
             $files = $_FILES['carousel_file'];
 
             $count = max(count($captions), is_array($files['name']) ? count($files['name']) : 0);
             $new_carousel = [];
+            $hex_pattern = '/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/';
 
             for ($i = 0; $i < $count; $i++) {
                 $caption = $captions[$i] ?? 'Keluarga';
                 $file = isset($carousel[$i]) ? $carousel[$i]['file'] : null;
 
+                // Per-item frame style
+                $item_frame = $item_frames[$i] ?? ($carousel[$i]['frame_style'] ?? 'original');
+                if (!in_array($item_frame, ['original', 'ethnic', 'gold'])) {
+                    $item_frame = 'original';
+                }
+
+                // Per-item frame color
+                $item_color = $item_colors[$i] ?? ($carousel[$i]['frame_color'] ?? null);
+                if (!$item_color || !preg_match($hex_pattern, $item_color)) $item_color = null;
+
                 if (!empty($files['name'][$i]) && $files['error'][$i] === 0) {
                     if (!is_dir($upload_path)) mkdir($upload_path, 0777, true);
                     $ext = pathinfo($files['name'][$i], PATHINFO_EXTENSION);
-                    $new_name = 'carousel_' . time() . '_' . $i . '.' . $ext;
-                    move_uploaded_file($files['tmp_name'][$i], $upload_path . $new_name);
+                    $base_name = 'carousel_' . time() . '_' . $i;
+                    $new_name = $base_name . '.' . $ext;
+                    
+                    $target_file = $upload_path . $new_name;
+                    move_uploaded_file($files['tmp_name'][$i], $target_file);
+                    
+                    // Cek opsi hapus background (jika ada checkbox active untuk index ini)
+                    $remove_bg_active = $this->input->post('remove_bg_' . $i);
+                    if ($remove_bg_active) {
+                        $this->_remove_image_background($target_file);
+                        // Setelah diolah background removal, filenya berubah format menjadi png
+                        $new_name = $base_name . '.png';
+                    }
+                    
                     $file = 'family/' . $new_name;
+                } else {
+                    // Jika foto lama, tapi tombol hapus background diklik secara manual
+                    $manual_remove_bg = $this->input->post('manual_remove_bg_' . $i);
+                    if ($manual_remove_bg && $file && file_exists($images_path . $file)) {
+                        $this->_remove_image_background($images_path . $file);
+                        // Update path ekstensi di config
+                        $path_info = pathinfo($file);
+                        $file = $path_info['dirname'] . '/' . $path_info['filename'] . '.png';
+                    }
                 }
 
                 if ($file) {
-                    $new_carousel[] = ['file' => $file, 'caption' => $caption];
+                    $entry = ['file' => $file, 'caption' => $caption, 'frame_style' => $item_frame];
+                    if ($item_color) $entry['frame_color'] = $item_color;
+                    $new_carousel[] = $entry;
                 }
             }
 
@@ -99,6 +135,26 @@ class Admin extends CI_Controller
             }
             redirect('admin#carousel-section');
         }
+
+        // Handle carousel style settings (frame style + frame card color)
+        $carousel_settings_path = FCPATH . 'assets/carousel-settings.json';
+        if ($this->input->method() === 'post' && $this->input->post('save_carousel_settings')) {
+            $allowed_frames = ['original', 'ethnic', 'gold'];
+            $frame = $this->input->post('carousel_frame');
+            if (!in_array($frame, $allowed_frames)) $frame = 'original';
+
+            $frame_color = $this->input->post('carousel_frame_color');
+
+            // Sanitize hex color
+            $hex_pattern = '/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/';
+            if (!preg_match($hex_pattern, $frame_color)) $frame_color = '#ffffff';
+
+            $settings = ['frame' => $frame, 'frame_color' => $frame_color];
+            file_put_contents($carousel_settings_path, json_encode($settings));
+            $this->session->set_flashdata('carousel_settings_success', 'Pengaturan tampilan carousel berhasil disimpan.');
+            redirect('admin#carousel-section');
+        }
+
 
         if ($this->input->method() === 'post' && $this->input->post('upload_banner')) {
             if (!empty($_FILES['banner_file']['name'])) {
@@ -216,6 +272,9 @@ class Admin extends CI_Controller
         $intro_config = json_decode(file_get_contents(FCPATH . 'assets/intro-config.json'), true);
         $sambutan_config = json_decode(file_get_contents(FCPATH . 'assets/sambutan-config.json'), true);
         $makam_config = json_decode(file_get_contents($makam_config_path), true);
+        $carousel_settings = file_exists($carousel_settings_path)
+            ? json_decode(file_get_contents($carousel_settings_path), true)
+            : ['frame' => 'gold', 'bg_top' => '#8F9F9F', 'bg_bottom' => '#274D4F'];
 
         $data = [
             'admin_name'        => $this->session->userdata('full_name'),
@@ -234,10 +293,11 @@ class Admin extends CI_Controller
             'sambutan_pars'     => $sambutan_config['paragraphs'] ?? [],
             'sambutan_closing'  => $sambutan_config['closing'] ?? "Wassalamu'alaikum Warahmatullahi Wabarakatuh.",
             'sambutan_sender'   => $sambutan_config['sender'] ?? 'Keluarga Besar H.M. Samhudi',
-            'makam_address'     => $makam_config['address'] ?? '',
-            'makam_maps_url'    => $makam_config['maps_embed_url'] ?? '',
-            'makam_maps_link'   => $makam_config['maps_link'] ?? '',
-            'makam_photos'      => $makam_config['photos'] ?? [],
+            'makam_address'         => $makam_config['address'] ?? '',
+            'makam_maps_url'        => $makam_config['maps_embed_url'] ?? '',
+            'makam_maps_link'       => $makam_config['maps_link'] ?? '',
+            'makam_photos'          => $makam_config['photos'] ?? [],
+            'carousel_settings'     => $carousel_settings,
         ];
 
         $this->load->view('admin/dashboard', $data);
@@ -1121,6 +1181,93 @@ class Admin extends CI_Controller
         redirect('admin/pekerja');
     }
 
+    /**
+     * Menghapus background putih/terang secara terprogram di sisi server menggunakan GD library.
+     * Mengkonversi piksel yang mendekati putih/krem menjadi transparan penuh, lalu menyimpan sebagai PNG.
+     */
+    private function _remove_image_background($file_path)
+    {
+        if (!file_exists($file_path)) return;
+
+        // Dapatkan informasi gambar
+        $info = getimagesize($file_path);
+        if (!$info) return;
+
+        $mime = $info['mime'];
+        
+        // Buat image source dari file asli
+        switch ($mime) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $src = imagecreatefromjpeg($file_path);
+                break;
+            case 'image/png':
+                $src = imagecreatefrompng($file_path);
+                break;
+            case 'image/gif':
+                $src = imagecreatefromgif($file_path);
+                break;
+            case 'image/webp':
+                if (function_exists('imagecreatefromwebp')) {
+                    $src = imagecreatefromwebp($file_path);
+                } else {
+                    return;
+                }
+                break;
+            default:
+                return;
+        }
+
+        if (!$src) return;
+
+        $width = imagesx($src);
+        $height = imagesy($src);
+
+        // Buat gambar tujuan yang transparan
+        $dst = imagecreatetruecolor($width, $height);
+        
+        // Setup transparansi
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        
+        $transparent_color = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+        imagefill($dst, 0, 0, $transparent_color);
+
+        for ($x = 0; $x < $width; $x++) {
+            for ($y = 0; $y < $height; $y++) {
+                $color_index = imagecolorat($src, $x, $y);
+                $rgba = imagecolorsforindex($src, $color_index);
+                
+                $r = $rgba['red'];
+                $g = $rgba['green'];
+                $b = $rgba['blue'];
+                $alpha = $rgba['alpha'];
+                
+                $is_white_or_cream = ($r > 205 && $g > 205 && $b > 185);
+                
+                if ($is_white_or_cream) {
+                    imagesetpixel($dst, $x, $y, $transparent_color);
+                } else {
+                    $current_pixel_color = imagecolorallocatealpha($dst, $r, $g, $b, $alpha);
+                    imagesetpixel($dst, $x, $y, $current_pixel_color);
+                }
+            }
+        }
+
+        $dir = dirname($file_path);
+        $filename = pathinfo($file_path, PATHINFO_FILENAME);
+        $new_file_path = $dir . '/' . $filename . '.png';
+
+        if ($file_path !== $new_file_path && file_exists($file_path)) {
+            unlink($file_path);
+        }
+
+        imagepng($dst, $new_file_path);
+        
+        imagedestroy($src);
+        imagedestroy($dst);
+    }
+
     // ================= KELOLA YAYASAN =================
     
     public function yayasan()
@@ -1483,3 +1630,4 @@ class Admin extends CI_Controller
     }
 
 }
+

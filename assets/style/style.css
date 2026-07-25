@@ -386,28 +386,173 @@ nav {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 260px;
-    background: var(--bg-card);
-    padding: 10px;
+    width: 270px;
+    background-color: #ffffff; /* Menggunakan warna latar dari panel admin */
+    padding: 12px !important; /* Padding 12px sama rata di semua sisi (Symmetric Border) */
     border-radius: 0;
     border: 1px solid var(--border-gold);
     box-shadow: 0 8px 20px rgba(0,0,0,.3);
     transition: .6s;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .carousel-img {
     width: 100%;
-    height: 280px;
+    height: 320px; /* Foto dibuat tinggi agar memenuhi area */
     object-fit: cover;
+    display: block;
+    border-radius: 2px;
 }
 
 .carousel-caption {
+    position: absolute !important;
+    bottom: 45px !important; /* Dinaikkan sedikit agar pas di tengah area putih polaroid bawaan foto */
+    left: 12px !important;
+    right: 12px !important;
     text-align: center;
     font-family: 'Brittany Signature', cursive;
-    font-size: 16px;
-    margin-top: 4px;
-    color: var(--text-caption);
+    font-size: 20px !important; /* Perbesar font agar lebih terbaca */
+    color: #4a4a4a !important; /* Sesuaikan warna abu gelap/hitam agar senada dengan teks 'Samhudi Gathering' bawaan */
+    text-shadow: none !important; /* Hapus bayangan agar terlihat menyatu alami */
+    z-index: 15;
+}
+
+/* Ornamen Overlay Bingkai Baru */
+.card-frame-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Klik tembus ke card */
+    z-index: 10;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Kelas khusus jika memilih original (Hanya bingkai warna pinggir + garis emas luar) */
+.carousel-card-original {
+    padding: 12px !important;
+}
+
+.carousel-card-original .carousel-img {
+    height: 320px !important;
+    object-fit: cover !important;
+    border-radius: 2px !important;
+}
+
+.carousel-card-original .carousel-caption {
+    position: absolute !important;
+    bottom: 45px !important;
+    left: 12px !important;
+    right: 12px !important;
+}
+
+.carousel-card-with-frame {
+    position: relative !important;
+    padding: 16px 14px 40px 14px !important;
+    border: none !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+}
+
+.carousel-card-with-frame .card-frame-overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+}
+
+.carousel-card-with-frame .carousel-img {
+    height: 264px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    border-radius: 4px !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.carousel-card-with-frame .carousel-caption {
+    position: absolute !important;
+    bottom: 12px !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+    color: #ffffff !important;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.9), 0px 0px 8px rgba(0,0,0,0.8) !important;
+    z-index: 15 !important;
+}
+
+
+
+/* ── Carousel Frame Styles ── */
+
+/* Tanpa Bingkai */
+.carousel-frame-none {
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15) !important;
+    background: transparent !important;
+    padding: 0 !important;
+}
+.carousel-frame-none .carousel-caption {
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    padding: 6px 8px;
+    margin-top: 0;
+}
+
+/* Bingkai Emas (default) */
+.carousel-frame-gold {
+    border: 2px solid #C8A84E !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,.3), 0 0 12px rgba(200,168,78,.3) !important;
+    background: var(--bg-card) !important;
+    padding: 10px !important;
+}
+
+/* Klasik Putih */
+.carousel-frame-classic {
+    border: 6px solid #ffffff !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4) !important;
+    background: #ffffff !important;
+    padding: 4px !important;
+    border-radius: 0 !important;
+}
+
+/* Modern Bulat */
+.carousel-frame-rounded {
+    border: 3px solid rgba(255,255,255,0.5) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35) !important;
+    background: var(--bg-card) !important;
+    padding: 8px !important;
+    border-radius: 18px !important;
+}
+.carousel-frame-rounded .carousel-img {
+    border-radius: 12px !important;
+}
+
+/* Shadow Tebal */
+.carousel-frame-shadow {
+    border: none !important;
+    box-shadow: 0 16px 40px rgba(0,0,0,.65), 0 4px 12px rgba(0,0,0,.3) !important;
+    background: var(--bg-card) !important;
+    padding: 8px !important;
+}
+
+/* Bingkai Ganda */
+.carousel-frame-double {
+    border: 3px solid #C8A84E !important;
+    outline: 3px solid #ffffff !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4) !important;
+    background: var(--bg-card) !important;
+    padding: 8px !important;
 }
 
 /* Overlap Section */

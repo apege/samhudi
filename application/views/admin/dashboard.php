@@ -304,39 +304,194 @@
                 </div>
                 <?php endif; ?>
 
-                <form method="post" enctype="multipart/form-data" class="space-y-4" id="carousel-form">
+                <?php if ($this->session->flashdata('carousel_settings_success')): ?>
+                <div class="bg-green-500/20 border border-green-500/40 text-green-200 px-5 py-3 rounded-lg text-sm mb-4">
+                    <?= $this->session->flashdata('carousel_settings_success') ?>
+                </div>
+                <?php endif; ?>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="carousel-grid">
-                        <?php foreach ($carousel_items as $i => $item): ?>
-                        <div class="bg-teal-800/40 border border-teal-700 rounded-xl p-4 space-y-3">
-                            <div class="relative group cursor-pointer" onclick="previewCarousel(this)">
-                                <img src="<?= base_url('assets/images/' . $item['file']) ?>" class="w-full h-36 object-cover rounded-lg border border-teal-700">
-                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all rounded-lg flex items-center justify-center">
-                                    <i class="bi bi-arrows-fullscreen text-white text-xl opacity-0 group-hover:opacity-100 transition-all"></i>
+                <?php
+                    $cs_frame       = $carousel_settings['frame']       ?? 'original';
+                    $cs_frame_color = $carousel_settings['frame_color'] ?? '#ffffff';
+                    if (!preg_match('/^#[0-9a-fA-F]{3,6}$/', $cs_frame_color)) $cs_frame_color = '#ffffff';
+                    $allowed_frames_view = ['original', 'ethnic', 'gold'];
+                    if (!in_array($cs_frame, $allowed_frames_view)) $cs_frame = 'original';
+                ?>
+
+                <!-- ── FORM TERPUSAT CAROUSEL (PANEL EDIT WARNA LATAR PER-FOTO) ── -->
+                <form method="post" enctype="multipart/form-data" class="space-y-6" id="carousel-form">
+                    <input type="hidden" name="save_carousel" value="1">
+
+                    <!-- ── PANEL KONTROL EDIT WARNA LATAR (UNTUK FOTO TERPILIH) ── -->
+                    <div class="bg-teal-800/30 border border-teal-700/80 rounded-2xl p-5 shadow-xl relative" id="photo-editor-panel">
+                        
+                        <!-- Header Panel Edit -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-5 border-b border-teal-700/60">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-teal-600/40 text-teal-300 border border-teal-500/40 flex items-center justify-center font-bold">
+                                    <i class="bi bi-palette-fill"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                                        PANEL EDIT WARNA BINGKAI <span class="text-amber-400 font-mono text-xs px-2 py-0.5 rounded bg-teal-900/80 border border-amber-400/40" id="editor-active-tag">FOTO 1</span>
+                                    </h4>
+                                    <p class="text-[11px] text-teal-300">Pilih foto dari daftar di bawah untuk mengubah warna latar pinggirannya di sini.</p>
                                 </div>
                             </div>
-                            <input type="text" name="captions[]" value="<?= htmlspecialchars($item['caption']) ?>" class="w-full bg-teal-800 border border-teal-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Caption">
-                            <div class="flex gap-2">
-                                <div class="drop-zone-carousel flex-1 border-2 border-dashed border-teal-700 rounded-lg p-3 text-center cursor-pointer hover:border-teal-500 transition-all text-xs" onclick="document.getElementById('carousel-upload-<?= $i ?>').click()" ondragover="event.preventDefault();this.classList.add('border-teal-400','bg-teal-800/50')" ondragleave="this.classList.remove('border-teal-400','bg-teal-800/50')" ondrop="handleCarouselDrop(event, <?= $i ?>)">
-                                    <i class="bi bi-cloud-arrow-up text-teal-400"></i>
-                                    <p class="text-teal-400 mt-1">Ganti</p>
-                                    <input id="carousel-upload-<?= $i ?>" type="file" name="carousel_file[]" accept="image/*" class="hidden" onchange="previewCarouselInput(this, <?= $i ?>)">
-                                </div>
-                                <button type="button" onclick="deleteCarousel(<?= $i ?>)" class="px-3 py-1.5 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/40 transition-all text-xs">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+
+                            <!-- Selector Foto Mana Yang Mau Dieksekusi -->
+                            <div class="flex items-center gap-2 bg-teal-900/60 p-1.5 rounded-xl border border-teal-700">
+                                <label class="text-xs text-teal-300 font-semibold pl-2 flex items-center gap-1 whitespace-nowrap">
+                                    <i class="bi bi-hand-index-thumb"></i> Edit Foto:
+                                </label>
+                                <select id="active-photo-selector" onchange="selectPhotoToEdit(parseInt(this.value))" class="bg-teal-800 border border-teal-600 rounded-lg px-3 py-1 text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer">
+                                    <?php foreach ($carousel_items as $i => $item): ?>
+                                    <option value="<?= $i ?>">Foto <?= $i + 1 ?>: <?= htmlspecialchars(mb_strimwidth($item['caption'], 0, 20, '...')) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
-                        <?php endforeach; ?>
+
+                        <div class="flex flex-col lg:flex-row gap-6 items-center">
+
+                            <!-- Sisi Kiri: Pilihan Warna Latar Foto Terpilih -->
+                            <div class="flex-1 space-y-4 w-full">
+                                <label class="text-xs text-teal-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="bi bi-palette-fill text-teal-400"></i> Pilih Warna Latar Pinggiran (Foto Terpilih)
+                                </label>
+                                
+                                <div class="flex items-center gap-4 bg-teal-900/40 p-4 rounded-xl border border-teal-700/60">
+                                    <input type="color" id="top-color-picker"
+                                           value="#ffffff"
+                                           class="w-14 h-14 rounded-xl border-2 border-teal-400 cursor-pointer bg-transparent p-0.5 flex-shrink-0"
+                                           oninput="setActivePhotoColor(this.value)">
+                                    
+                                    <div class="flex-1 space-y-2.5">
+                                        <div class="bg-teal-950/80 border border-teal-700 rounded-lg px-3 py-1 flex justify-between items-center max-w-[200px]">
+                                            <span class="text-white/50 text-[10px] uppercase font-mono">Kode Hex</span>
+                                            <span id="top-color-hex" class="text-white font-mono text-xs font-bold">#ffffff</span>
+                                        </div>
+                                        
+                                        <!-- Presets warna cepat -->
+                                        <div class="flex gap-2 flex-wrap items-center">
+                                            <?php
+                                            $presets = [
+                                                '#ffffff' => 'Putih',
+                                                '#FFF8F0' => 'Krem',
+                                                '#F5EBE2' => 'Coklat Muda',
+                                                '#D4B896' => 'Coklat Pastel',
+                                                '#C8A84E' => 'Emas',
+                                                '#1B3835' => 'Teal Gelap',
+                                                '#0F211F' => 'Hijau Hitam',
+                                                '#1a1a1a' => 'Hitam',
+                                            ];
+                                            foreach ($presets as $hex => $name): ?>
+                                            <button type="button"
+                                                    onclick="setActivePhotoColor('<?= $hex ?>')"
+                                                    title="<?= $name ?>"
+                                                    class="w-6 h-6 rounded-full border-2 border-teal-600 hover:scale-110 hover:border-white transition-all flex-shrink-0"
+                                                    style="background:<?= $hex ?>"></button>
+                                            <?php endforeach; ?>
+                                            <button type="button" onclick="setActivePhotoColor('#ffffff')"
+                                                    class="text-[10px] text-teal-300 hover:text-white px-2.5 py-1 rounded-md border border-teal-600 hover:border-teal-400 transition-all font-semibold">
+                                                Reset
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sisi Kanan: Live Preview Warna Bingkai Foto Terpilih -->
+                            <div class="w-full lg:w-56 flex flex-col items-center gap-2 lg:border-l lg:border-teal-700/60 lg:pl-6">
+                                <div class="flex items-center gap-1 text-[10px] text-teal-300 font-bold uppercase tracking-wider">
+                                    <i class="bi bi-eye-fill"></i> PREVIEW WARNA FOTO
+                                </div>
+                                <div class="bg-teal-900/40 rounded-xl p-3 border border-teal-700 flex items-center justify-center w-full min-h-[250px]">
+                                    <div id="live-frame-preview" class="carousel-card carousel-card-original"
+                                         style="position:relative; width:170px; transform:none; top:auto; left:auto;
+                                                background-color:#ffffff; padding:10px !important;
+                                                border-radius:0; border:1px solid #C8A84E !important; box-shadow:0 8px 20px rgba(0,0,0,.3);
+                                                transition:none; cursor:default; box-sizing:border-box;">
+                                        
+                                        <img id="preview-card-img" src="<?= base_url('assets/images/' . ($carousel_items[0]['file'] ?? 'family/family1.png')) ?>"
+                                             style="width:100% !important; height:210px !important; object-fit:cover !important; display:block; border-radius:2px !important; position:relative; z-index:1;">
+                                        
+                                        <div class="carousel-caption" id="live-frame-caption"
+                                             style="position:absolute !important; bottom:28px !important; left:10px !important; right:10px !important; margin:0 auto; text-align:center; font-family:'Brittany Signature', cursive; font-size:14px !important; color:#4a4a4a !important; text-shadow:none !important; z-index:15;">
+                                            <?= htmlspecialchars($carousel_items[0]['caption'] ?? 'Keluarga') ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── DAFTAR FOTO CAROUSEL ── -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="bi bi-grid-fill"></i> Daftar Foto Carousel
+                            </h4>
+                            <span class="text-[11px] text-teal-400">Klik "Edit Warna Foto Ini" untuk mengganti warna latarnya</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="carousel-grid">
+                            <?php foreach ($carousel_items as $i => $item):
+                                $item_color = !empty($item['frame_color']) ? $item['frame_color'] : '#ffffff';
+                            ?>
+                            <div class="bg-teal-800/40 border border-teal-700 rounded-xl p-4 space-y-3 carousel-item-card transition-all" id="carousel-card-item-<?= $i ?>">
+                                
+                                <!-- Hidden input simpan frame_color per-item -->
+                                <input type="hidden" name="carousel_item_color[]" id="item-color-input-<?= $i ?>" value="<?= htmlspecialchars($item_color) ?>">
+
+                                <!-- Preview Gambar & Fullscreen Modal -->
+                                <div class="relative group cursor-pointer" onclick="previewCarousel(this)">
+                                    <img src="<?= base_url('assets/images/' . $item['file']) ?>" class="w-full h-36 object-cover rounded-lg border border-teal-700">
+                                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all rounded-lg flex items-center justify-center">
+                                        <i class="bi bi-arrows-fullscreen text-white text-xl opacity-0 group-hover:opacity-100 transition-all"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Input Caption -->
+                                <div>
+                                    <label class="text-[10px] text-teal-400 font-semibold block mb-1">Caption Foto:</label>
+                                    <input type="text" name="captions[]" value="<?= htmlspecialchars($item['caption']) ?>" 
+                                           oninput="updateActivePhotoCaption(<?= $i ?>, this.value)"
+                                           class="w-full bg-teal-800 border border-teal-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Caption Foto">
+                                </div>
+
+                                <!-- Tombol Eksekusi Edit Warna Foto Ini -->
+                                <button type="button" onclick="selectPhotoToEdit(<?= $i ?>)" id="btn-select-card-<?= $i ?>" 
+                                        class="w-full py-2 bg-teal-700/60 hover:bg-teal-600 text-teal-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border border-teal-500/50">
+                                    <i class="bi bi-palette-fill"></i> Edit Warna Foto Ini
+                                </button>
+
+                                <!-- Ganti Foto & Hapus Card -->
+                                <div class="flex gap-2">
+                                    <div class="drop-zone-carousel flex-1 border-2 border-dashed border-teal-700 rounded-lg p-3 text-center cursor-pointer hover:border-teal-500 transition-all text-xs" onclick="document.getElementById('carousel-upload-<?= $i ?>').click()" ondragover="event.preventDefault();this.classList.add('border-teal-400','bg-teal-800/50')" ondragleave="this.classList.remove('border-teal-400','bg-teal-800/50')" ondrop="handleCarouselDrop(event, <?= $i ?>)">
+                                        <i class="bi bi-cloud-arrow-up text-teal-400"></i>
+                                        <p class="text-teal-400 mt-1">Ganti Foto</p>
+                                        <input id="carousel-upload-<?= $i ?>" type="file" name="carousel_file[]" accept="image/*" class="hidden" onchange="previewCarouselInput(this, <?= $i ?>)">
+                                    </div>
+                                    <button type="button" onclick="deleteCarousel(<?= $i ?>)" class="px-3 py-1.5 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/40 transition-all text-xs">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
 
                     <input type="hidden" name="delete_index" value="">
-                    <div class="flex gap-3">
-                        <button type="submit" id="save-carousel-btn" name="save_carousel" value="1" class="bg-white text-teal-900 font-display font-semibold px-6 py-2.5 rounded-full hover:bg-gray-100 transition-all shadow-lg text-sm">
-                            <i class="bi bi-check-lg mr-1"></i> Simpan Carousel
+                    
+                    <!-- ── TOMBOL SIMPAN TUNGGAL ── -->
+                    <div class="flex gap-3 pt-4 border-t border-teal-700/60">
+                        <button type="submit" id="save-carousel-btn" name="save_carousel" value="1" class="bg-teal-500 text-white font-display font-semibold px-8 py-3 rounded-full hover:bg-teal-400 transition-all shadow-lg text-sm flex items-center gap-2">
+                            <i class="bi bi-check-circle-fill text-base"></i> Simpan Perubahan Carousel
                         </button>
-                        <button type="button" onclick="addCarouselCard()" class="border border-dashed border-teal-600 text-teal-400 hover:text-white font-display font-semibold px-6 py-2.5 rounded-full hover:bg-teal-800/50 transition-all text-sm">
-                            <i class="bi bi-plus-lg mr-1"></i> Tambah
+                        <button type="button" onclick="addCarouselCard()" class="border border-dashed border-teal-600 text-teal-400 hover:text-white font-display font-semibold px-6 py-3 rounded-full hover:bg-teal-800/50 transition-all text-sm flex items-center gap-2">
+                            <i class="bi bi-plus-lg"></i> Tambah Foto Baru
                         </button>
                     </div>
                 </form>
@@ -556,18 +711,129 @@ function previewCarousel(el) {
     document.body.style.overflow = 'hidden';
 }
 
+let currentActiveIdx = 0;
+
+function selectPhotoToEdit(idx) {
+    const cards = document.querySelectorAll('.carousel-item-card');
+    if (cards.length === 0) return;
+    currentActiveIdx = idx;
+
+    // Update tag di header editor panel
+    const tag = document.getElementById('editor-active-tag');
+    if (tag) tag.textContent = 'FOTO ' + (idx + 1);
+
+    // Update dropdown selector
+    const sel = document.getElementById('active-photo-selector');
+    if (sel) sel.value = idx;
+
+    // Highlighting kartu di daftar bawah
+    cards.forEach((card, i) => {
+        const btn = document.getElementById('btn-select-card-' + i);
+        if (i === idx) {
+            card.classList.add('ring-2', 'ring-teal-400', 'border-teal-400', 'bg-teal-800/80');
+            card.classList.remove('bg-teal-800/40');
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Sedang Di-edit';
+                btn.className = 'w-full py-2 bg-teal-500 text-teal-950 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md';
+            }
+        } else {
+            card.classList.remove('ring-2', 'ring-teal-400', 'border-teal-400', 'bg-teal-800/80');
+            card.classList.add('bg-teal-800/40');
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-palette-fill"></i> Edit Warna Foto Ini';
+                btn.className = 'w-full py-2 bg-teal-700/60 hover:bg-teal-600 text-teal-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border border-teal-500/50';
+            }
+        }
+    });
+
+    // Ambil nilai color dari hidden input kartu terpilih
+    const hiddenColor = document.getElementById('item-color-input-' + idx);
+    const colorHex    = hiddenColor ? hiddenColor.value : '#ffffff';
+
+    // Update color picker & hex code di top panel
+    const topColorPicker = document.getElementById('top-color-picker');
+    const topColorHex    = document.getElementById('top-color-hex');
+    if (topColorPicker) topColorPicker.value = colorHex;
+    if (topColorHex)    topColorHex.textContent = colorHex;
+
+    // Refresh Live Preview
+    refreshLivePreview(idx, colorHex);
+}
+
+function refreshLivePreview(idx, colorHex) {
+    const cards = document.querySelectorAll('.carousel-item-card');
+    const card  = cards[idx];
+    if (!card) return;
+
+    const imgEl     = card.querySelector('.relative.group img');
+    const captionEl = card.querySelector('input[name="captions[]"]');
+
+    const preview        = document.getElementById('live-frame-preview');
+    const previewImg     = document.getElementById('preview-card-img');
+    const previewCaption = document.getElementById('live-frame-caption');
+
+    if (previewImg && imgEl)         previewImg.src = imgEl.src;
+    if (previewCaption && captionEl) previewCaption.textContent = captionEl.value || 'Keluarga';
+
+    if (preview) {
+        preview.style.backgroundColor = colorHex;
+        preview.style.border = '1px solid #C8A84E';
+        preview.style.boxShadow = '0 8px 20px rgba(0,0,0,.3)';
+    }
+}
+
+function setActivePhotoColor(colorHex) {
+    const hiddenColor = document.getElementById('item-color-input-' + currentActiveIdx);
+    if (hiddenColor) hiddenColor.value = colorHex;
+
+    selectPhotoToEdit(currentActiveIdx);
+
+    const f = document.getElementById('carousel-form');
+    if (f && typeof f.checkChanges === 'function') f.checkChanges();
+}
+
+function updateActivePhotoCaption(idx, captionText) {
+    // Update selector dropdown label
+    const sel = document.getElementById('active-photo-selector');
+    if (sel && sel.options[idx]) {
+        let shortText = captionText.length > 20 ? captionText.substring(0,20) + '...' : captionText;
+        sel.options[idx].text = 'Foto ' + (idx + 1) + ': ' + (shortText || 'Keluarga');
+    }
+
+    if (idx === currentActiveIdx) {
+        const previewCaption = document.getElementById('live-frame-caption');
+        if (previewCaption) previewCaption.textContent = captionText || 'Keluarga';
+    }
+}
+
 function addCarouselCard() {
     const grid = document.getElementById('carousel-grid');
-    const idx = grid.children.length;
+    const idx  = grid.children.length;
     const card = document.createElement('div');
-    card.className = 'bg-teal-800/40 border border-teal-700 rounded-xl p-4 space-y-3 carousel-item-card';
+    card.className = 'bg-teal-800/40 border border-teal-700 rounded-xl p-4 space-y-3 carousel-item-card transition-all';
+    card.id = 'carousel-card-item-' + idx;
     card.innerHTML = `
-        <div class="w-full h-36 bg-teal-800 rounded-lg border border-dashed border-teal-600 flex items-center justify-center text-teal-500 text-xs">Preview</div>
-        <input type="text" name="captions[]" value="Keluarga" class="w-full bg-teal-800 border border-teal-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Caption">
+        <input type="hidden" name="carousel_item_color[]" id="item-color-input-${idx}" value="#ffffff">
+
+        <div class="relative group cursor-pointer" onclick="previewCarousel(this)">
+            <div class="w-full h-36 bg-teal-800 rounded-lg border border-dashed border-teal-600 flex items-center justify-center text-teal-500 text-xs">Preview Foto</div>
+        </div>
+
+        <div>
+            <label class="text-[10px] text-teal-400 font-semibold block mb-1">Caption Foto:</label>
+            <input type="text" name="captions[]" value="Keluarga" oninput="updateActivePhotoCaption(${idx}, this.value)" class="w-full bg-teal-800 border border-teal-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Caption Foto">
+        </div>
+
+        <button type="button" onclick="selectPhotoToEdit(${idx})" id="btn-select-card-${idx}" class="w-full py-2 bg-teal-700/60 hover:bg-teal-600 text-teal-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border border-teal-500/50">
+            <i class="bi bi-palette-fill"></i> Edit Warna Foto Ini
+        </button>
+
+
+
         <div class="flex gap-2">
             <div class="drop-zone-carousel flex-1 border-2 border-dashed border-teal-700 rounded-lg p-3 text-center cursor-pointer hover:border-teal-500 transition-all text-xs" onclick="document.getElementById('carousel-upload-new-${idx}').click()" ondragover="event.preventDefault();this.classList.add('border-teal-400','bg-teal-800/50')" ondragleave="this.classList.remove('border-teal-400','bg-teal-800/50')" ondrop="handleCarouselDrop(event, -1)">
                 <i class="bi bi-cloud-arrow-up text-teal-400"></i>
-                <p class="text-teal-400 mt-1">Ganti</p>
+                <p class="text-teal-400 mt-1">Pilih Foto</p>
                 <input id="carousel-upload-new-${idx}" type="file" name="carousel_file[]" accept="image/*" class="hidden" onchange="previewCarouselInput(this, -1)">
             </div>
             <button type="button" onclick="this.closest('.carousel-item-card').remove(); const f = document.getElementById('carousel-form'); if (f && typeof f.checkChanges === 'function') f.checkChanges();" class="px-3 py-1.5 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/40 transition-all text-xs">
@@ -576,9 +842,28 @@ function addCarouselCard() {
         </div>
     `;
     grid.appendChild(card);
+
+    // Update dropdown selector
+    const sel = document.getElementById('active-photo-selector');
+    if (sel) {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = 'Foto ' + (idx + 1) + ': Keluarga';
+        sel.appendChild(opt);
+    }
+
+    selectPhotoToEdit(idx);
+
     const f = document.getElementById('carousel-form');
     if (f && typeof f.checkChanges === 'function') f.checkChanges();
 }
+
+// Inisialisasi default foto 0 terpilih saat halaman diload
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        selectPhotoToEdit(0);
+    }, 100);
+});
 
 function handleCarouselDrop(e, idx) {
     e.preventDefault();
@@ -880,6 +1165,86 @@ function deleteCarousel(index) {
     form.appendChild(idxInp);
     form.submit();
 }
+
+
+// ── Carousel Frame Color Preview ──
+function updateFrameColorPreview(color) {
+    var hexEl = document.getElementById('frame_color_hex');
+    if (hexEl) hexEl.textContent = color;
+
+    var preview = document.getElementById('live-frame-preview');
+    if (preview) {
+        preview.style.backgroundColor = color;
+        // Auto caption text color based on brightness
+        var hex = color.replace('#','');
+        if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+        var r = parseInt(hex.substr(0,2),16);
+        var g = parseInt(hex.substr(2,2),16);
+        var b = parseInt(hex.substr(4,2),16);
+        var brightness = (r*299 + g*587 + b*114) / 1000;
+        var caption = document.getElementById('live-frame-caption');
+        if (caption) caption.style.color = brightness > 128 ? '#1f1f1f' : '#ffffff';
+    }
+}
+
+function setFrameColor(hex) {
+    var input = document.getElementById('carousel_frame_color');
+    if (input) {
+        input.value = hex;
+        updateFrameColorPreview(hex);
+    }
+}
+
+// ── Fungsi Pemilihan Bingkai Global Secara Visual ──
+function selectGlobalFrame(frameStyle) {
+    // Simpan nilai ke input hidden
+    const input = document.getElementById('global-frame-input');
+    if (input) input.value = frameStyle;
+
+    // Ganti class active border tombol pilihan global
+    const options = ['original', 'ethnic', 'gold'];
+    options.forEach(function(opt) {
+        const btn = document.getElementById('btn-global-frame-' + opt);
+        if (btn) {
+            if (opt === frameStyle) {
+                btn.classList.remove('border-teal-700', 'hover:border-teal-600');
+                btn.classList.add('border-teal-400', 'bg-teal-800/60');
+            } else {
+                btn.classList.remove('border-teal-400', 'bg-teal-800/60');
+                btn.classList.add('border-teal-700', 'hover:border-teal-600');
+            }
+        }
+    });
+
+    // Update Live Frame Overlay
+    const preview = document.getElementById('live-frame-preview');
+    const overlay = document.getElementById('preview-overlay');
+    const img = document.getElementById('preview-card-img');
+    
+    if (preview && overlay && img) {
+        if (frameStyle === 'ethnic') {
+            preview.classList.add('carousel-card-with-frame');
+            overlay.style.backgroundImage = "url('<?= base_url('assets/images/frame_ethnic.png') ?>')";
+            overlay.style.display = 'block';
+            img.style.height = '118px';
+        } else if (frameStyle === 'gold') {
+            preview.classList.add('carousel-card-with-frame');
+            overlay.style.backgroundImage = "url('<?= base_url('assets/images/frame_gold.png') ?>')";
+            overlay.style.display = 'block';
+            img.style.height = '118px';
+        } else {
+            preview.classList.remove('carousel-card-with-frame');
+            overlay.style.backgroundImage = 'none';
+            overlay.style.display = 'none';
+            img.style.height = '140px';
+        }
+    }
+}
+
+
+
+
+
     </script>
 </body>
 </html>
