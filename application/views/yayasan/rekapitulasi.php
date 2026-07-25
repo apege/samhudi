@@ -735,6 +735,7 @@ if (!function_exists('render_cards_pagination')) {
 
         function render3DPieChart(dataSeries, titleText) {
             highChartInstance = Highcharts.chart('container_chart_3d', {
+                exporting: { enabled: false },
                 chart: {
                     type: 'pie',
                     options3d: {
@@ -831,6 +832,7 @@ if (!function_exists('render_cards_pagination')) {
             const isMobile = window.innerWidth < 640;
 
             fsChartInstance = Highcharts.chart('container_chart_3d_fs', {
+                exporting: { enabled: false },
                 chart: {
                     type: 'pie',
                     options3d: { enabled: true, alpha: 45, beta: 0 },
