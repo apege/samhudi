@@ -9,6 +9,7 @@ class Profile extends CI_Controller {
         $this->load->model('Admin_model');
         $this->load->model('Forum_model');
         $this->load->model('User_model');
+        $this->load->model('Log_model');
         $this->load->helper(['url', 'form']);
         $this->load->library(['session', 'form_validation']);
     }
@@ -85,6 +86,7 @@ class Profile extends CI_Controller {
         }
 
         $this->User_model->update($user_id, $update_data);
+        $this->Log_model->insert_log($user_id, $this->session->userdata('full_name') ?: 'User', $this->session->userdata('role') ?: 'member', 'Memperbarui tampilan profil (bio/avatar/banner)');
         $this->session->set_flashdata('success_msg', 'Profil berhasil diperbarui!');
         redirect('profile');
     }
