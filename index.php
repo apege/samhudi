@@ -53,8 +53,15 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'production');
 
+/*
+ *---------------------------------------------------------------
+ * DEFAULT TIMEZONE
+ *---------------------------------------------------------------
+ * Force timezone to Asia/Jakarta (WIB / UTC+7) for all timestamps
+ */
+	date_default_timezone_set('Asia/Jakarta');
 /*
  *---------------------------------------------------------------
  * ERROR REPORTING

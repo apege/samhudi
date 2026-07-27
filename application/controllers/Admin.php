@@ -1584,9 +1584,16 @@ class Admin extends CI_Controller
         }
         $total_rows_individu = count($individu_candidates);
         $limit_individu = 5;
-        $page_individu = $this->input->get('page_individu') ? (int) $this->input->get('page_individu') : 1;
-        $offset_individu = ($page_individu - 1) * $limit_individu;
-        $individu_candidates_paginated = array_slice($individu_candidates, $offset_individu, $limit_individu);
+        $page_individu_raw = $this->input->get('page_individu');
+        if ($page_individu_raw === 'all') {
+            $page_individu  = 'all';
+            $limit_individu = $total_rows_individu ?: 1;
+            $individu_candidates_paginated = $individu_candidates;
+        } else {
+            $page_individu  = $page_individu_raw ? (int) $page_individu_raw : 1;
+            $offset_individu = ($page_individu - 1) * $limit_individu;
+            $individu_candidates_paginated = array_slice($individu_candidates, $offset_individu, $limit_individu);
+        }
 
         // 2. RUNDAYAN REKAP: Search & Paginate
         $search_rundayan = $this->input->get('search_rundayan', TRUE) ?? '';
@@ -1599,9 +1606,16 @@ class Admin extends CI_Controller
         }
         $total_rows_rundayan = count($rundayan_candidates);
         $limit_rundayan = 5;
-        $page_rundayan = $this->input->get('page_rundayan') ? (int) $this->input->get('page_rundayan') : 1;
-        $offset_rundayan = ($page_rundayan - 1) * $limit_rundayan;
-        $rundayan_candidates_paginated = array_slice($rundayan_candidates, $offset_rundayan, $limit_rundayan);
+        $page_rundayan_raw = $this->input->get('page_rundayan');
+        if ($page_rundayan_raw === 'all') {
+            $page_rundayan  = 'all';
+            $limit_rundayan = $total_rows_rundayan ?: 1;
+            $rundayan_candidates_paginated = $rundayan_candidates;
+        } else {
+            $page_rundayan  = $page_rundayan_raw ? (int) $page_rundayan_raw : 1;
+            $offset_rundayan = ($page_rundayan - 1) * $limit_rundayan;
+            $rundayan_candidates_paginated = array_slice($rundayan_candidates, $offset_rundayan, $limit_rundayan);
+        }
 
         // 3. BAGAN SILSILAH: Search filter
         $search_bagan = $this->input->get('search_bagan', TRUE) ?? '';

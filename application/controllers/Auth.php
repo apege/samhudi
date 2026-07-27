@@ -53,6 +53,7 @@ class Auth extends CI_Controller
         }
 
         if (!$this->_verify_captcha('login', $this->input->post('captcha_code', TRUE))) {
+            $this->Log_model->insert_log(null, $this->input->post('identifier', TRUE) ?: 'Tamu', 'guest', 'Gagal login: Kode captcha salah');
             $this->_fail_login(['Kode captcha salah, coba lagi.']);
             return;
         }
@@ -63,11 +64,13 @@ class Auth extends CI_Controller
         $user = $this->User_model->get_by_email($email);
 
         if (!$user || !password_verify($password, $user->password)) {
+            $this->Log_model->insert_log(null, $email ?: 'Tamu', 'guest', 'Gagal login: Email atau password salah');
             $this->_fail_login(['Email atau password salah.']);
             return;
         }
 
         if ($user->status !== 'active') {
+            $this->Log_model->insert_log($user->id, $user->full_name, $user->role, 'Gagal login: Akun belum aktif / menunggu persetujuan');
             if ((int)$user->is_verified === 1) {
                 $this->_fail_login(['Akun Anda sedang menunggu persetujuan/verifikasi dari Admin.']);
             } else {
@@ -126,6 +129,7 @@ class Auth extends CI_Controller
         $this->form_validation->set_message('is_unique', '{field} tersebut sudah terdaftar. Mohon gunakan data yang berbeda.');
 
         if ($this->form_validation->run() === FALSE) {
+            $this->Log_model->insert_log(null, $this->input->post('full_name', TRUE) ?: ($this->input->post('email', TRUE) ?: 'Tamu'), 'guest', 'Gagal registrasi: Data tidak valid / duplikat');
             $this->session->set_flashdata('errors', [strip_tags($this->form_validation->error_string())]);
             $this->session->set_flashdata('old', [
                 'full_name' => $this->input->post('full_name'),
@@ -137,6 +141,7 @@ class Auth extends CI_Controller
         }
 
         if (!$this->_verify_captcha('signup', $this->input->post('captcha_code', TRUE))) {
+            $this->Log_model->insert_log(null, $this->input->post('full_name', TRUE) ?: 'Tamu', 'guest', 'Gagal registrasi: Kode captcha salah');
             $this->session->set_flashdata('errors', ['Kode captcha salah, coba lagi.']);
             $this->session->set_flashdata('old', [
                 'full_name' => $this->input->post('full_name'),
@@ -175,12 +180,14 @@ class Auth extends CI_Controller
                 $signup_otp = $this->session->userdata('signup_otp');
                 
                 if (!$signup_otp || $signup_otp['code'] !== $otp_code) {
+                    $this->Log_model->insert_log(null, $signup_basic['full_name'] ?: 'Tamu', 'guest', 'Gagal verifikasi OTP registrasi: Kode OTP salah');
                     $this->session->set_flashdata('errors', ['Kode OTP salah.']);
                     redirect('auth/verify_otp');
                     return;
                 }
                 
                 if (strtotime($signup_otp['expired_at']) < time()) {
+                    $this->Log_model->insert_log(null, $signup_basic['full_name'] ?: 'Tamu', 'guest', 'Gagal verifikasi OTP registrasi: Kode OTP kadaluarsa');
                     $this->session->set_flashdata('errors', ['OTP sudah kadaluarsa, minta kirim ulang.']);
                     redirect('auth/verify_otp');
                     return;
@@ -196,6 +203,8 @@ class Auth extends CI_Controller
                     'status'      => 'inactive', // Menunggu persetujuan admin
                     'is_verified' => 1,
                 ]);
+
+                $this->Log_model->insert_log($user_id, $signup_basic['full_name'], $signup_basic['role'], 'Berhasil registrasi akun baru (Menunggu persetujuan admin)');
 
                 // Clear temporary registration session variables
                 $this->session->unset_userdata('signup_basic_info');
@@ -311,6 +320,7 @@ class Auth extends CI_Controller
             }
 
             if (!$this->_verify_captcha('forgot', $this->input->post('captcha_code', TRUE))) {
+                $this->Log_model->insert_log(null, $this->input->post('email', TRUE) ?: 'Tamu', 'guest', 'Gagal lupa password: Kode captcha salah');
                 $this->session->set_flashdata('errors', ['Kode captcha salah, coba lagi.']);
                 redirect('auth/forgot_password');
                 return;
@@ -323,6 +333,7 @@ class Auth extends CI_Controller
             $generic_message = 'Kalau email kamu terdaftar, link reset password sudah dikirim.';
 
             if ($user) {
+                $this->Log_model->insert_log($user->id, $user->full_name, $user->role, 'Meminta tautan reset password via email');
                 $token = generate_reset_token();
                 $expired_at = date('Y-m-d H:i:s', strtotime('+30 minutes'));
                 $this->User_model->save_reset_token($user->id, $token, $expired_at);
@@ -379,6 +390,8 @@ class Auth extends CI_Controller
             $hashed = password_hash($this->input->post('password'), PASSWORD_DEFAULT);
             $this->User_model->update_password($reset->user_id, $hashed);
             $this->User_model->mark_reset_used($token);
+            $user_reset = $this->User_model->get_by_id($reset->user_id);
+            $this->Log_model->insert_log($reset->user_id, $user_reset ? $user_reset->full_name : 'User', $user_reset ? $user_reset->role : 'member', 'Berhasil melakukan reset password');
 
             $this->session->set_flashdata('message', 'Password berhasil diganti, silakan login.');
             redirect('auth?mode=login');
@@ -611,6 +624,7 @@ class Auth extends CI_Controller
         $this->db->where('id', $member_id)->update('family_members', [
             'user_id' => $user_id
         ]);
+        $this->Log_model->insert_log($user_id, $this->session->userdata('full_name') ?: 'User', $this->session->userdata('role') ?: 'member', 'Berhasil menautkan profil silsilah (Onboarding)');
 
         echo json_encode(['status' => true, 'message' => 'Berhasil menautkan profil.']);
     }
@@ -725,6 +739,7 @@ class Auth extends CI_Controller
         $result = $this->Family_model->insert_new_member($data, $role, $processed_rel_ids);
 
         if (isset($result['status']) && $result['status']) {
+            $this->Log_model->insert_log($user_id, $this->session->userdata('full_name') ?: $full_name, $this->session->userdata('role') ?: 'member', 'Berhasil menambahkan data diri ke silsilah (Onboarding)');
             echo json_encode(['status' => true, 'id' => $result['id'] ?? null, 'message' => 'Berhasil menambahkan diri ke silsilah.']);
         } else {
             $msg = $result['message'] ?? 'Gagal menambahkan data, pastikan relasi valid.';

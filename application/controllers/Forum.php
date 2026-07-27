@@ -8,6 +8,7 @@ class Forum extends CI_Controller {
         parent::__construct();
         $this->load->model('Forum_model');
         $this->load->model('User_model');
+        $this->load->model('Log_model');
         $this->load->helper(['url', 'form']);
         $this->load->library(['form_validation', 'session']);
     }
@@ -113,6 +114,7 @@ class Forum extends CI_Controller {
         ];
 
         $this->Forum_model->create_forum($data);
+        $this->Log_model->insert_log($user_id, $this->session->userdata('full_name') ?: 'User', $this->session->userdata('role') ?: 'member', 'Membuat topik forum baru: ' . $title);
         $this->session->set_flashdata('success_msg', 'Topik diskusi berhasil diterbitkan!');
         redirect('forum');
     }
@@ -161,6 +163,7 @@ class Forum extends CI_Controller {
         ];
 
         $this->Forum_model->create_comment($data);
+        $this->Log_model->insert_log($user_id, $this->session->userdata('full_name') ?: 'User', $this->session->userdata('role') ?: 'member', 'Menambahkan komentar pada forum ID: ' . $forum_id);
         redirect('forum/view/' . $forum_id);
     }
 

@@ -23,14 +23,20 @@ if (!function_exists('build_nomination_trees')) {
 }
 
 if (!function_exists('render_tree_node')) {
-    function render_tree_node($cand, $children) {
+    function render_tree_node($cand, $children, $color_theme = 'emerald') {
         $cand_key = strtolower(trim($cand['candidate_name']));
         $has_children = isset($children[$cand_key]);
+        $is_cyan = ($color_theme === 'cyan');
+
+        $line_color = $is_cyan ? 'bg-cyan-500/50' : 'bg-emerald-500/50';
+        $card_bg    = $is_cyan ? 'from-cyan-500/10 to-cyan-500/0 border-cyan-500/25' : 'from-emerald-500/10 to-emerald-500/0 border-emerald-500/25';
+        $text_color = $is_cyan ? 'text-cyan-300' : 'text-emerald-400';
+        $border_l   = $is_cyan ? 'border-cyan-500/25' : 'border-emerald-500/25';
         ?>
         <div class="flex flex-col gap-3 text-left">
             <div class="flex items-center gap-3">
-                <div class="w-3 h-0.5 bg-emerald-500/50"></div>
-                <div class="bg-gradient-to-r from-emerald-500/10 to-emerald-500/0 border border-emerald-500/25 rounded-2xl px-5 py-3 flex items-center justify-between gap-6 transition-all duration-300">
+                <div class="w-3 h-0.5 <?= $line_color ?>"></div>
+                <div class="bg-gradient-to-r <?= $card_bg ?> border rounded-2xl px-5 py-3 flex items-center justify-between gap-6 transition-all duration-300">
                     <div>
                         <?php 
                         $role_raw = trim((isset($cand['roles_text']) && $cand['roles_text'] !== '-') ? $cand['roles_text'] : ($cand['description'] ?: ''));
@@ -40,16 +46,16 @@ if (!function_exists('render_tree_node')) {
                         elseif ($is_sekretaris)  { $role_lbl = 'Kandidat Sekretaris'; }
                         else                     { $role_lbl = 'Kandidat Ketua'; }
                         ?>
-                        <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block mb-0.5"><?= htmlspecialchars($role_lbl) ?></span>
+                        <span class="text-[10px] uppercase font-bold <?= $text_color ?> tracking-wider block mb-0.5"><?= htmlspecialchars($role_lbl) ?></span>
                         <strong class="text-white text-base font-semibold"><?= htmlspecialchars($cand['candidate_name']) ?></strong>
                     </div>
                 </div>
             </div>
             
             <?php if ($has_children): ?>
-                <div class="flex flex-col gap-3 pl-8 border-l border-emerald-500/25 ml-[26px] pt-1">
+                <div class="flex flex-col gap-3 pl-8 border-l <?= $border_l ?> ml-[26px] pt-1">
                     <?php foreach ($children[$cand_key] as $child): ?>
-                        <?php render_tree_node($child, $children); ?>
+                        <?php render_tree_node($child, $children, $color_theme); ?>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -59,21 +65,41 @@ if (!function_exists('render_tree_node')) {
 }
 
 if (!function_exists('render_cards_pagination')) {
-    function render_cards_pagination($total_rows, $limit, $current_page, $param_name) {
-        $total_pages = ceil($total_rows / $limit);
-        if ($total_pages <= 1) return '';
-        
+    function render_cards_pagination($total_rows, $limit, $current_page, $param_name, $is_all = false) {
+        $total_pages = ceil($total_rows / max($limit, 1));
+
         $get = $_GET;
         unset($get[$param_name]);
-        $query = http_build_query($get);
-        $url_prefix = current_url() . ($query ? '?' . $query . '&' : '?') . $param_name . '=';
-        
-        $html = '<div class="flex items-center justify-center gap-2 mt-6">';
-        
-        if ($current_page > 1) {
-            $html .= '<a href="' . $url_prefix . ($current_page - 1) . '" class="px-3.5 py-2 rounded-xl bg-[#172e2b] hover:bg-emerald-600/40 text-white text-xs font-semibold border border-emerald-500/30 transition-all"><i class="bi bi-chevron-left"></i> Prev</a>';
+        $query_base = http_build_query($get);
+        $url_prefix = current_url() . ($query_base ? '?' . $query_base . '&' : '?') . $param_name . '=';
+
+        // Build "Lihat Semua" / "Per Halaman" URL
+        $get_toggle = $_GET;
+        if ($is_all) {
+            unset($get_toggle[$param_name]);
+            $qt = http_build_query($get_toggle);
+            $toggle_url   = current_url() . ($qt ? '?' . $qt : '');
+            $toggle_label = '<i class="bi bi-list-ul"></i> Per Halaman';
+            $toggle_class = 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        } else {
+            $get_toggle[$param_name] = 'all';
+            $toggle_url   = current_url() . '?' . http_build_query($get_toggle);
+            $toggle_label = '<i class="bi bi-eye-fill"></i> Lihat Semua';
+            $toggle_class = 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
         }
-        
+        $toggle_btn = '<a href="' . $toggle_url . '" class="px-3 py-2 rounded-xl text-xs font-semibold transition-all ' . $toggle_class . '">' . $toggle_label . '</a>';
+
+        if ($is_all || $total_pages <= 1) {
+            return '<div class="flex items-center justify-center gap-2 mt-6">' . $toggle_btn . '</div>';
+        }
+
+        $html = '<div class="flex items-center justify-center gap-2 mt-6">';
+        $html .= $toggle_btn;
+
+        if ($current_page > 1) {
+            $html .= '<a href="' . $url_prefix . ($current_page - 1) . '" class="px-3.5 py-2 rounded-xl bg-[#172e2b] hover:bg-emerald-600/40 text-white text-xs font-semibold border border-emerald-500/30 transition-all"><i class="bi bi-chevron-left"></i></a>';
+        }
+
         for ($i = 1; $i <= $total_pages; $i++) {
             if ($i === $current_page) {
                 $html .= '<span class="px-3.5 py-2 rounded-xl bg-emerald-500 text-teal-950 text-xs font-extrabold border border-emerald-400 shadow-md">' . $i . '</span>';
@@ -81,11 +107,11 @@ if (!function_exists('render_cards_pagination')) {
                 $html .= '<a href="' . $url_prefix . $i . '" class="px-3.5 py-2 rounded-xl bg-[#172e2b] hover:bg-emerald-600/40 text-white text-xs font-semibold border border-emerald-500/30 transition-all">' . $i . '</a>';
             }
         }
-        
+
         if ($current_page < $total_pages) {
-            $html .= '<a href="' . $url_prefix . ($current_page + 1) . '" class="px-3.5 py-2 rounded-xl bg-[#172e2b] hover:bg-emerald-600/40 text-white text-xs font-semibold border border-emerald-500/30 transition-all">Next <i class="bi bi-chevron-right"></i></a>';
+            $html .= '<a href="' . $url_prefix . ($current_page + 1) . '" class="px-3.5 py-2 rounded-xl bg-[#172e2b] hover:bg-emerald-600/40 text-white text-xs font-semibold border border-emerald-500/30 transition-all"><i class="bi bi-chevron-right"></i></a>';
         }
-        
+
         $html .= '</div>';
         return $html;
     }
@@ -150,6 +176,7 @@ if (!function_exists('render_cards_pagination')) {
 
         .highcharts-credits { display: none !important; }
         .highcharts-background { fill: transparent !important; }
+        .highcharts-legend-navigation { display: none !important; }
 
         /* Hover Rundayan Tooltip Styling */
         .rundayan-hover {
@@ -185,7 +212,32 @@ if (!function_exists('render_cards_pagination')) {
 
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-12">
+        <?php
+        // Determine focus mode (view all for cards or tables)
+        $show_only = null;
+        if ($page_card_individu === 'all' || $page_tbl_individu === 'all') $show_only = 'individu';
+        elseif ($page_card_rundayan === 'all' || $page_tbl_rundayan === 'all') $show_only = 'rundayan';
 
+        // Build back URL
+        $get_back_rek = $_GET;
+        unset($get_back_rek['page_card_individu'], $get_back_rek['page_card_rundayan'], $get_back_rek['page_tbl_individu'], $get_back_rek['page_tbl_rundayan']);
+        $back_url_rek = current_url() . ($get_back_rek ? '?' . http_build_query($get_back_rek) : '');
+        ?>
+
+        <?php if ($show_only): ?>
+        <!-- Focus Banner: Lihat Semua mode -->
+        <div class="flex items-center justify-between gap-4 bg-[#172e2b] border border-emerald-500/30 rounded-2xl px-5 py-3">
+            <span class="text-sm font-semibold text-white/80">
+                <i class="bi bi-eye-fill text-emerald-300 mr-1.5"></i>
+                Menampilkan semua data <strong class="text-emerald-300"><?= $show_only === 'individu' ? 'Individu' : 'Rundayan' ?></strong>
+            </span>
+            <a href="<?= $back_url_rek ?>" class="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all">
+                <i class="bi bi-arrow-left"></i> Kembali ke Tampilan Normal
+            </a>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!$show_only): ?>
         <!-- SECTION 1: CHART 3D PIE (REKAPITULASI DUKUNGAN PALING ATAS) -->
         <div class="bg-gradient-to-b from-[#162724] to-[#101c1a] border border-teal-700/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-teal-700/30 pb-4">
@@ -214,13 +266,29 @@ if (!function_exists('render_cards_pagination')) {
             </div>
 
             <!-- 3D Pie Chart Render Box -->
-            <div class="relative min-h-[400px] flex items-center justify-center">
+            <div class="relative min-h-[400px] flex flex-col items-center justify-center">
                 <div id="container_chart_3d" class="w-full h-[420px]" style="touch-action: manipulation;"></div>
+                
+                <!-- CUSTOM HTML LEGEND PAGINATION CONTROLS -->
+                <div id="legend_pagination_wrapper" class="hidden items-center justify-between w-full max-w-xs mt-2 px-3 py-1.5 bg-[#122422] border border-teal-700/40 rounded-xl text-xs shrink-0 gap-2 shadow-lg">
+                    <button id="btn_legend_prev" onclick="scrollLegendPage(false, -1)" class="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/60 active:scale-95 text-emerald-300 border border-emerald-500/30 rounded-lg font-bold transition-all disabled:pointer-events-none">
+                        <i class="bi bi-chevron-left text-xs"></i>
+                        <span>Prev</span>
+                    </button>
+                    <div class="flex items-center gap-1 text-xs font-bold text-white/90">
+                        <span>Hal</span>
+                        <span id="legend_page_info">1 / 1</span>
+                    </div>
+                    <button id="btn_legend_next" onclick="scrollLegendPage(false, 1)" class="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/60 active:scale-95 text-emerald-300 border border-emerald-500/30 rounded-lg font-bold transition-all disabled:pointer-events-none">
+                        <span>Next</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                </div>
             </div>
         </div>
+        <?php endif; // end !$show_only chart ?>
 
-
-
+        <?php if (!$show_only): ?>
         <!-- Hero Card Banner -->
         <div class="relative overflow-hidden bg-gradient-to-r from-[#172e2b] via-[#1c3835] to-[#122422] border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl">
             <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -236,9 +304,11 @@ if (!function_exists('render_cards_pagination')) {
                 </p>
             </div>
         </div>
+        <?php endif; // end !$show_only hero ?>
 
         <!-- SECTION 2: KARTU CALON REKAPITULASI (INDIVIDU & RUNDAYAN SEPARATE + PAGINATION) -->
         <div class="space-y-10">
+            <?php if (!$show_only): ?>
             <div class="border-b border-white/10 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="font-display font-extrabold text-2xl text-white flex items-center gap-2">
@@ -247,8 +317,10 @@ if (!function_exists('render_cards_pagination')) {
                     <p class="text-xs text-white/60">Setiap kartu mewakili 1 nama calon ter-rekap dengan total suara, daftar pengusul/pemilih, rincian rundayan, dan tanggal input.</p>
                 </div>
             </div>
+            <?php endif; // end !$show_only section header ?>
 
             <!-- 2.1 KARTU INDIVIDU -->
+            <?php if ((!$show_only && $page_tbl_individu !== 'all' && $page_tbl_rundayan !== 'all') || $page_card_individu === 'all'): ?>
             <div class="bg-gradient-to-b from-[#18312e] to-[#112422] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
                     <div class="flex items-center gap-3">
@@ -344,12 +416,14 @@ if (!function_exists('render_cards_pagination')) {
 
                     <!-- Pagination Cards Individu -->
                     <div class="pt-2">
-                        <?= render_cards_pagination($total_cards_individu, $limit_cards_individu, $page_card_individu, 'page_card_individu') ?>
+                        <?= render_cards_pagination($total_cards_individu, $limit_cards_individu, $page_card_individu, 'page_card_individu', $page_card_individu === 'all') ?>
                     </div>
                 <?php endif; ?>
             </div>
+            <?php endif; // end individu cards ?>
 
             <!-- 2.2 KARTU RUNDAYAN -->
+            <?php if ((!$show_only && $page_tbl_individu !== 'all' && $page_tbl_rundayan !== 'all') || $page_card_rundayan === 'all'): ?>
             <div class="bg-gradient-to-b from-[#112d30] to-[#0c1f21] border border-cyan-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
                     <div class="flex items-center gap-3">
@@ -445,22 +519,31 @@ if (!function_exists('render_cards_pagination')) {
 
                     <!-- Pagination Cards Rundayan -->
                     <div class="pt-2">
-                        <?= render_cards_pagination($total_cards_rundayan, $limit_cards_rundayan, $page_card_rundayan, 'page_card_rundayan') ?>
+                        <?= render_cards_pagination($total_cards_rundayan, $limit_cards_rundayan, $page_card_rundayan, 'page_card_rundayan', $page_card_rundayan === 'all') ?>
                     </div>
                 <?php endif; ?>
             </div>
+            <?php endif; // end rundayan cards ?>
         </div>
 
         <!-- SECTION 3: TABEL REKAPITULASI INDIVIDU & RUNDAYAN -->
+        <?php
+        // Table focus mode (uses global $show_only)
+        $tbl_show_only = $show_only;
+        ?>
+        <?php if (!$show_only || $page_tbl_individu === 'all' || $page_tbl_rundayan === 'all'): ?>
         <div class="space-y-8">
+            <?php if (!$show_only): ?>
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="font-display font-extrabold text-2xl text-white">Daftar Tabel Rekapitulasi</h2>
-                    <p class="text-xs text-white/60">Arahkan kursor (hover) ke nama <span class="text-emerald-400 font-bold">Rundayan</span> untuk melihat nama-nama pengusul & calonnya.</p>
+                    <p class="text-xs text-white/60">Arahkan kursor (hover) ke nama <span class="text-emerald-400 font-bold">Rundayan</span> untuk melihat nama-nama pengusul &amp; calonnya.</p>
                 </div>
             </div>
+            <?php endif; ?>
 
             <!-- 1. TABEL REKAP INDIVIDU -->
+            <?php if (!$tbl_show_only || $tbl_show_only === 'individu'): ?>
             <div class="bg-gradient-to-b from-[#1b3638] to-[#122829] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="text-lg font-bold text-amber-300 flex items-center gap-2">
@@ -475,7 +558,7 @@ if (!function_exists('render_cards_pagination')) {
                     </div>
                 </div>
 
-                <?php if (empty($individu_candidates)): ?>
+                <?php if (empty($individu_tbl_paginated) && $total_tbl_individu === 0): ?>
                     <p class="text-white/40 text-sm italic py-4">Belum ada data pencalonan individu yang disetujui.</p>
                 <?php else: ?>
                     <div class="overflow-x-auto">
@@ -492,9 +575,9 @@ if (!function_exists('render_cards_pagination')) {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-white/5 text-sm">
-                                <?php foreach ($individu_candidates as $index => $c): ?>
+                                <?php foreach ($individu_tbl_paginated as $index => $c): ?>
                                     <tr class="table-row-item hover:bg-white/5 transition-colors">
-                                        <td class="py-3.5 pr-6 text-white/50 whitespace-nowrap">#<?= $index + 1 ?></td>
+                                        <td class="py-3.5 pr-6 text-white/50 whitespace-nowrap">#<?= ($page_tbl_individu === 'all' ? $index + 1 : (($page_tbl_individu - 1) * $limit_tbl_individu) + $index + 1) ?></td>
                                         <td class="py-3.5 pr-6 font-bold text-white whitespace-nowrap"><?= htmlspecialchars($c['candidate_name']) ?></td>
                                         <td class="py-3.5 pr-6 whitespace-nowrap text-xs">
                                              <span class="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
@@ -514,10 +597,19 @@ if (!function_exists('render_cards_pagination')) {
                             </tbody>
                         </table>
                     </div>
+                    <!-- Pagination Footer Tabel Individu -->
+                    <div class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-white/5 pt-4 sm:flex-row">
+                        <span class="text-xs text-white/55">
+                            Menampilkan <?= count($individu_tbl_paginated) ?> dari <?= $total_tbl_individu ?> data individu
+                        </span>
+                        <?= render_cards_pagination($total_tbl_individu, $limit_tbl_individu, $page_tbl_individu, 'page_tbl_individu', $page_tbl_individu === 'all') ?>
+                    </div>
                 <?php endif; ?>
             </div>
+            <?php endif; // end tbl individu ?>
 
             <!-- 2. TABEL REKAP RUNDAYAN -->
+            <?php if (!$tbl_show_only || $tbl_show_only === 'rundayan'): ?>
             <div class="bg-gradient-to-b from-[#112d30] to-[#0c1f21] border border-cyan-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="text-lg font-bold text-cyan-300 flex items-center gap-2">
@@ -532,7 +624,7 @@ if (!function_exists('render_cards_pagination')) {
                     </div>
                 </div>
 
-                <?php if (empty($rundayan_candidates)): ?>
+                <?php if (empty($rundayan_tbl_paginated) && $total_tbl_rundayan === 0): ?>
                     <p class="text-white/40 text-sm italic py-4">Belum ada data pencalonan rundayan yang disetujui.</p>
                 <?php else: ?>
                     <div class="overflow-x-auto">
@@ -549,9 +641,9 @@ if (!function_exists('render_cards_pagination')) {
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-white/5 text-sm">
-                                <?php foreach ($rundayan_candidates as $index => $c): ?>
+                                <?php foreach ($rundayan_tbl_paginated as $index => $c): ?>
                                     <tr class="table-row-item hover:bg-white/5 transition-colors">
-                                        <td class="py-3.5 pr-6 text-white/50 whitespace-nowrap">#<?= $index + 1 ?></td>
+                                        <td class="py-3.5 pr-6 text-white/50 whitespace-nowrap">#<?= ($page_tbl_rundayan === 'all' ? $index + 1 : (($page_tbl_rundayan - 1) * $limit_tbl_rundayan) + $index + 1) ?></td>
                                         <td class="py-3.5 pr-6 font-bold text-white whitespace-nowrap"><?= htmlspecialchars($c['candidate_name']) ?></td>
                                         <td class="py-3.5 pr-6 whitespace-nowrap text-xs">
                                              <span class="px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
@@ -571,16 +663,37 @@ if (!function_exists('render_cards_pagination')) {
                             </tbody>
                         </table>
                     </div>
+                    <!-- Pagination Footer Tabel Rundayan -->
+                    <div class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-white/5 pt-4 sm:flex-row">
+                        <span class="text-xs text-white/55">
+                            Menampilkan <?= count($rundayan_tbl_paginated) ?> dari <?= $total_tbl_rundayan ?> data rundayan
+                        </span>
+                        <?= render_cards_pagination($total_tbl_rundayan, $limit_tbl_rundayan, $page_tbl_rundayan, 'page_tbl_rundayan', $page_tbl_rundayan === 'all') ?>
+                    </div>
                 <?php endif; ?>
             </div>
+            <?php endif; // end tbl rundayan ?>
         </div>
+        <?php endif; // end !$show_only (section 3 tables) ?>
 
+        <?php if (!$show_only): ?>
         <!-- SECTION 4: BAGAN SILSILAH PENCALONAN -->
         <div class="space-y-6 pt-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 class="font-display font-extrabold text-2xl text-white">Bagan Silsilah Hubungan Pencalonan</h2>
-                    <p class="text-xs text-white/60">Struktur pohon hubungan pencalonan berdasarkan garis rundayan masing-masing.</p>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div>
+                        <h2 class="font-display font-extrabold text-2xl text-white">Bagan Silsilah Hubungan Pencalonan</h2>
+                        <p class="text-xs text-white/60">Struktur pohon hubungan pencalonan berdasarkan garis rundayan masing-masing.</p>
+                    </div>
+                    <!-- Toggle Switcher Individu / Rundayan -->
+                    <div class="flex bg-black/40 p-1 rounded-xl border border-white/10 text-xs shrink-0 self-start sm:self-auto">
+                        <button id="btn_bagan_type_individu" onclick="switchBaganType('individu')" class="px-4 py-1.5 rounded-lg font-bold transition-all bg-emerald-500 text-white shadow">
+                            Individu
+                        </button>
+                        <button id="btn_bagan_type_rundayan" onclick="switchBaganType('rundayan')" class="px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all">
+                            Rundayan
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Search Form Bagan Silsilah -->
@@ -607,54 +720,110 @@ if (!function_exists('render_cards_pagination')) {
 
             <div class="space-y-6">
                 <?php 
-                    $raw_grouped_ancestor = [];
+                    $grouped_bagan_individu = [];
+                    $grouped_bagan_rundayan = [];
                     foreach ($approved_candidates as $c) {
-                        $raw_grouped_ancestor[$c['ancestor_name']][] = $c;
+                        $c_type = $c['type'] ?? 'individu';
+                        if ($c_type === 'rundayan') {
+                            $grouped_bagan_rundayan[$c['ancestor_name']][] = $c;
+                        } else {
+                            $grouped_bagan_individu[$c['ancestor_name']][] = $c;
+                        }
                     }
                 ?>
-                <?php if (empty($raw_grouped_ancestor)): ?>
-                    <div class="bg-gradient-to-b from-[#1A2824] to-[#121c19] border border-teal-700/30 rounded-3xl p-6 text-center text-white/40 text-sm italic">
-                        Belum ada bagan pencalonan.
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($raw_grouped_ancestor as $ancestor => $cand_list): ?>
-                        <div class="bagan-ancestor-card bg-gradient-to-b from-[#172b28] to-[#0f1d1b] border border-teal-700/30 rounded-3xl p-6 sm:p-8 shadow-2xl">
-                            <h3 class="text-xl font-bold text-emerald-300 border-b border-teal-700/30 pb-3 mb-6 flex items-center gap-2">
-                                <i class="bi bi-diagram-3-fill"></i> Rundayan: 
-                                <span class="rundayan-hover text-white underline decoration-emerald-500/50" onmouseenter="showRundayanHover(event, '<?= htmlspecialchars(addslashes($ancestor)) ?>')" onmouseleave="hideRundayanHover()">
-                                    <?= htmlspecialchars($ancestor) ?>
-                                </span>
-                            </h3>
-                            
-                            <?php 
-                                $tree_data = build_nomination_trees($cand_list); 
-                                $roots = $tree_data['roots'];
-                                $children = $tree_data['children'];
-                            ?>
-                            
-                            <div class="overflow-x-auto pb-2">
-                                <div class="flex flex-col gap-6" style="min-width: 600px;">
-                                    <?php foreach ($roots as $nominator => $root_cands): ?>
-                                        <div class="flex flex-col gap-4 pl-4 border-l-2 border-emerald-500/30">
-                                            <div class="flex items-center gap-2">
-                                                <span class="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/60 uppercase tracking-wider">Pengusul</span>
-                                                <strong class="text-white text-sm font-semibold"><?= htmlspecialchars($nominator) ?></strong>
+                
+                <!-- CONTAINER BAGAN INDIVIDU -->
+                <div id="container_bagan_individu" class="space-y-6">
+                    <?php if (empty($grouped_bagan_individu)): ?>
+                        <div class="bg-gradient-to-b from-[#1A2824] to-[#121c19] border border-teal-700/30 rounded-3xl p-6 text-center text-white/40 text-sm italic">
+                            Belum ada bagan pencalonan kategori Individu.
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($grouped_bagan_individu as $ancestor => $cand_list): ?>
+                            <div class="bagan-ancestor-card bg-gradient-to-b from-[#172b28] to-[#0f1d1b] border border-teal-700/30 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                                <h3 class="text-xl font-bold text-emerald-300 border-b border-teal-700/30 pb-3 mb-6 flex items-center gap-2">
+                                    <i class="bi bi-diagram-3-fill"></i> Rundayan: 
+                                    <span class="rundayan-hover text-white underline decoration-emerald-500/50" onmouseenter="showRundayanHover(event, '<?= htmlspecialchars(addslashes($ancestor)) ?>')" onmouseleave="hideRundayanHover()">
+                                        <?= htmlspecialchars($ancestor) ?>
+                                    </span>
+                                </h3>
+                                
+                                <?php 
+                                    $tree_data = build_nomination_trees($cand_list); 
+                                    $roots = $tree_data['roots'];
+                                    $children = $tree_data['children'];
+                                ?>
+                                
+                                <div class="overflow-x-auto pb-4">
+                                    <div class="flex flex-col gap-6" style="min-width: 600px;">
+                                        <?php foreach ($roots as $nominator => $root_cands): ?>
+                                            <div class="flex flex-col gap-4 pl-4 border-l-2 border-emerald-500/30">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/55 uppercase tracking-wider">Anggota Keluarga Samhudi</span>
+                                                    <strong class="text-white text-sm font-semibold"><?= htmlspecialchars($nominator) ?></strong>
+                                                </div>
+                                                
+                                                <div class="flex flex-col gap-3 pl-6">
+                                                    <?php foreach ($root_cands as $rc): ?>
+                                                        <?php render_tree_node($rc, $children); ?>
+                                                    <?php endforeach; ?>
+                                                </div>
                                             </div>
-                                            
-                                            <div class="flex flex-col gap-3 pl-6">
-                                                <?php foreach ($root_cands as $rc): ?>
-                                                    <?php render_tree_node($rc, $children); ?>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
                             </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- CONTAINER BAGAN RUNDAYAN -->
+                <div id="container_bagan_rundayan" class="space-y-6 hidden">
+                    <?php if (empty($grouped_bagan_rundayan)): ?>
+                        <div class="bg-gradient-to-b from-[#1A2824] to-[#121c19] border border-teal-700/30 rounded-3xl p-6 text-center text-white/40 text-sm italic">
+                            Belum ada bagan pencalonan kategori Rundayan.
                         </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <?php else: ?>
+                        <?php foreach ($grouped_bagan_rundayan as $ancestor => $cand_list): ?>
+                            <div class="bagan-ancestor-card bg-gradient-to-b from-[#172b28] to-[#0f1d1b] border border-teal-700/30 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                                <h3 class="text-xl font-bold text-cyan-300 border-b border-teal-700/30 pb-3 mb-6 flex items-center gap-2">
+                                    <i class="bi bi-diagram-3-fill"></i> Rundayan: 
+                                    <span class="rundayan-hover text-white underline decoration-cyan-500/50" onmouseenter="showRundayanHover(event, '<?= htmlspecialchars(addslashes($ancestor)) ?>')" onmouseleave="hideRundayanHover()">
+                                        <?= htmlspecialchars($ancestor) ?>
+                                    </span>
+                                </h3>
+                                
+                                <?php 
+                                    $tree_data = build_nomination_trees($cand_list); 
+                                    $roots = $tree_data['roots'];
+                                    $children = $tree_data['children'];
+                                ?>
+                                
+                                <div class="overflow-x-auto pb-4">
+                                    <div class="flex flex-col gap-6" style="min-width: 600px;">
+                                        <?php foreach ($roots as $nominator => $root_cands): ?>
+                                            <div class="flex flex-col gap-4 pl-4 border-l-2 border-cyan-500/30">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/55 uppercase tracking-wider">Anggota Keluarga Samhudi</span>
+                                                    <strong class="text-white text-sm font-semibold"><?= htmlspecialchars($nominator) ?></strong>
+                                                </div>
+                                                
+                                                <div class="flex flex-col gap-3 pl-6">
+                                                    <?php foreach ($root_cands as $rc): ?>
+                                                        <?php render_tree_node($rc, $children, 'cyan'); ?>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
+        <?php endif; // end !$show_only (bagan silsilah) ?>
 
     </main>
 
@@ -777,6 +946,18 @@ if (!function_exists('render_cards_pagination')) {
                 },
                 legend: {
                     enabled: true,
+                    maxHeight: 120,
+                    navigation: {
+                        enabled: true,
+                        activeColor: '#10B981',
+                        inactiveColor: 'rgba(255,255,255,0.3)',
+                        arrowSize: 12,
+                        style: {
+                            color: '#FFFFFF',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                        }
+                    },
                     labelFormat: window.innerWidth < 640 ? '<b>{name}</b>: {y} suara ({percentage:.0f}%)' : '{name}',
                     itemStyle: { color: '#FFFFFF', fontFamily: 'Inter', fontWeight: '600', fontSize: '12px' },
                     itemHoverStyle: { color: '#D4B571' }
@@ -806,6 +987,7 @@ if (!function_exists('render_cards_pagination')) {
                 colors: getDistinctColorsForData(dataSeries),
                 series: [{ name: 'Dukungan', data: dataSeries }]
             });
+            setTimeout(() => { updateCustomLegendPaginationUI(false); }, 50);
         }
 
         function switchChart(type) {
@@ -820,6 +1002,27 @@ if (!function_exists('render_cards_pagination')) {
                 btnRundayan.className = "px-4 py-1.5 rounded-lg font-bold transition-all bg-cyan-500 text-white shadow";
                 btnIndividu.className = "px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all";
                 render3DPieChart(chartDataRundayan, 'Perolehan Suara Kandidat Rundayan');
+            }
+        }
+
+        function switchBaganType(type) {
+            const btnIndividu = document.getElementById('btn_bagan_type_individu');
+            const btnRundayan = document.getElementById('btn_bagan_type_rundayan');
+            const containerIndividu = document.getElementById('container_bagan_individu');
+            const containerRundayan = document.getElementById('container_bagan_rundayan');
+
+            if (!containerIndividu || !containerRundayan) return;
+
+            if (type === 'individu') {
+                btnIndividu.className = "px-4 py-1.5 rounded-lg font-bold transition-all bg-emerald-500 text-white shadow";
+                btnRundayan.className = "px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all";
+                containerIndividu.classList.remove('hidden');
+                containerRundayan.classList.add('hidden');
+            } else {
+                btnRundayan.className = "px-4 py-1.5 rounded-lg font-bold transition-all bg-cyan-500 text-white shadow";
+                btnIndividu.className = "px-4 py-1.5 rounded-lg font-bold text-white/60 hover:text-white transition-all";
+                containerRundayan.classList.remove('hidden');
+                containerIndividu.classList.add('hidden');
             }
         }
 
@@ -882,6 +1085,59 @@ if (!function_exists('render_cards_pagination')) {
                 colors: getDistinctColorsForData(dataSeries),
                 series: [{ name: 'Dukungan', data: dataSeries }]
             });
+            setTimeout(() => { updateCustomLegendPaginationUI(true); }, 50);
+        }
+
+        // CUSTOM LEGEND PAGINATION HANDLERS
+        function scrollLegendPage(isFS, direction) {
+            const chartObj = isFS ? fsChartInstance : highChartInstance;
+            if (!chartObj || !chartObj.legend || !chartObj.legend.pages) return;
+            
+            const legend = chartObj.legend;
+            const totalPages = legend.pages.length;
+            if (totalPages <= 1) return;
+
+            legend.scroll(direction);
+            
+            setTimeout(() => {
+                updateCustomLegendPaginationUI(isFS);
+            }, 50);
+        }
+
+        function updateCustomLegendPaginationUI(isFS) {
+            const chartObj = isFS ? fsChartInstance : highChartInstance;
+            const prefix = isFS ? 'fs_' : '';
+            const container = document.getElementById(prefix + 'legend_pagination_wrapper');
+            const label = document.getElementById(prefix + 'legend_page_info');
+            const btnPrev = document.getElementById(prefix + 'btn_legend_prev');
+            const btnNext = document.getElementById(prefix + 'btn_legend_next');
+
+            if (!container || !label || !chartObj || !chartObj.legend || !chartObj.legend.pages) {
+                if (container) { container.classList.add('hidden'); container.classList.remove('flex'); }
+                return;
+            }
+
+            const totalPages = chartObj.legend.pages.length;
+            if (totalPages <= 1) {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+
+            const curPage = chartObj.legend.currentPage || 1;
+            label.innerHTML = `${curPage} / ${totalPages}`;
+
+            if (btnPrev) {
+                btnPrev.disabled = (curPage === 1);
+                btnPrev.style.opacity = (curPage === 1) ? '0.4' : '1';
+            }
+            if (btnNext) {
+                btnNext.disabled = (curPage === totalPages);
+                btnNext.style.opacity = (curPage === totalPages) ? '0.4' : '1';
+            }
         }
 
         function fsSwitchChart(type) {
@@ -1074,8 +1330,24 @@ if (!function_exists('render_cards_pagination')) {
                 </div>
             </div>
             <!-- Fullscreen Chart Container -->
-            <div class="flex-1 flex items-center justify-center p-2 sm:p-4 min-h-0">
+            <div class="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 min-h-0 relative">
                 <div id="container_chart_3d_fs" class="w-full h-full" style="touch-action: manipulation;"></div>
+                
+                <!-- FULLSCREEN CUSTOM LEGEND PAGINATION -->
+                <div id="fs_legend_pagination_wrapper" class="hidden items-center justify-between w-full max-w-xs mt-2 px-3 py-1.5 bg-[#122422] border border-teal-700/40 rounded-xl text-xs shrink-0 gap-2 shadow-lg">
+                    <button id="fs_btn_legend_prev" onclick="scrollLegendPage(true, -1)" class="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/60 active:scale-95 text-emerald-300 border border-emerald-500/30 rounded-lg font-bold transition-all disabled:pointer-events-none">
+                        <i class="bi bi-chevron-left text-xs"></i>
+                        <span>Prev</span>
+                    </button>
+                    <div class="flex items-center gap-1 text-xs font-bold text-white/90">
+                        <span>Hal</span>
+                        <span id="fs_legend_page_info">1 / 1</span>
+                    </div>
+                    <button id="fs_btn_legend_next" onclick="scrollLegendPage(true, 1)" class="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/60 active:scale-95 text-emerald-300 border border-emerald-500/30 rounded-lg font-bold transition-all disabled:pointer-events-none">
+                        <span>Next</span>
+                        <i class="bi bi-chevron-right text-xs"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

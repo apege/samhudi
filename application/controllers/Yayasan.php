@@ -157,16 +157,58 @@ class Yayasan extends CI_Controller {
         // Pagination for Individu Cards (3 per page for mobile optimization)
         $total_cards_individu = count($individu_candidates);
         $limit_cards_individu = 3;
-        $page_card_individu   = $this->input->get('page_card_individu') ? (int) $this->input->get('page_card_individu') : 1;
-        $offset_card_individu = ($page_card_individu - 1) * $limit_cards_individu;
-        $individu_cards_paginated = array_slice($individu_candidates, $offset_card_individu, $limit_cards_individu);
+        $page_card_individu_raw = $this->input->get('page_card_individu');
+        if ($page_card_individu_raw === 'all') {
+            $page_card_individu   = 'all';
+            $limit_cards_individu = $total_cards_individu ?: 1;
+            $individu_cards_paginated = $individu_candidates;
+        } else {
+            $page_card_individu   = $page_card_individu_raw ? (int) $page_card_individu_raw : 1;
+            $offset_card_individu = ($page_card_individu - 1) * $limit_cards_individu;
+            $individu_cards_paginated = array_slice($individu_candidates, $offset_card_individu, $limit_cards_individu);
+        }
 
         // Pagination for Rundayan Cards (3 per page for mobile optimization)
         $total_cards_rundayan = count($rundayan_candidates);
         $limit_cards_rundayan = 3;
-        $page_card_rundayan   = $this->input->get('page_card_rundayan') ? (int) $this->input->get('page_card_rundayan') : 1;
-        $offset_card_rundayan = ($page_card_rundayan - 1) * $limit_cards_rundayan;
-        $rundayan_cards_paginated = array_slice($rundayan_candidates, $offset_card_rundayan, $limit_cards_rundayan);
+        $page_card_rundayan_raw = $this->input->get('page_card_rundayan');
+        if ($page_card_rundayan_raw === 'all') {
+            $page_card_rundayan   = 'all';
+            $limit_cards_rundayan = $total_cards_rundayan ?: 1;
+            $rundayan_cards_paginated = $rundayan_candidates;
+        } else {
+            $page_card_rundayan   = $page_card_rundayan_raw ? (int) $page_card_rundayan_raw : 1;
+            $offset_card_rundayan = ($page_card_rundayan - 1) * $limit_cards_rundayan;
+            $rundayan_cards_paginated = array_slice($rundayan_candidates, $offset_card_rundayan, $limit_cards_rundayan);
+        }
+
+        // Pagination for Section 3 Table: Individu (5 per page)
+        $total_tbl_individu   = count($individu_candidates);
+        $limit_tbl_individu   = 5;
+        $page_tbl_individu_raw = $this->input->get('page_tbl_individu');
+        if ($page_tbl_individu_raw === 'all') {
+            $page_tbl_individu  = 'all';
+            $limit_tbl_individu = $total_tbl_individu ?: 1;
+            $individu_tbl_paginated = $individu_candidates;
+        } else {
+            $page_tbl_individu  = $page_tbl_individu_raw ? (int) $page_tbl_individu_raw : 1;
+            $offset_tbl_individu = ($page_tbl_individu - 1) * $limit_tbl_individu;
+            $individu_tbl_paginated = array_slice($individu_candidates, $offset_tbl_individu, $limit_tbl_individu);
+        }
+
+        // Pagination for Section 3 Table: Rundayan (5 per page)
+        $total_tbl_rundayan   = count($rundayan_candidates);
+        $limit_tbl_rundayan   = 5;
+        $page_tbl_rundayan_raw = $this->input->get('page_tbl_rundayan');
+        if ($page_tbl_rundayan_raw === 'all') {
+            $page_tbl_rundayan  = 'all';
+            $limit_tbl_rundayan = $total_tbl_rundayan ?: 1;
+            $rundayan_tbl_paginated = $rundayan_candidates;
+        } else {
+            $page_tbl_rundayan  = $page_tbl_rundayan_raw ? (int) $page_tbl_rundayan_raw : 1;
+            $offset_tbl_rundayan = ($page_tbl_rundayan - 1) * $limit_tbl_rundayan;
+            $rundayan_tbl_paginated = array_slice($rundayan_candidates, $offset_tbl_rundayan, $limit_tbl_rundayan);
+        }
 
         $search_bagan = $this->input->get('search_bagan', TRUE) ?? '';
         $approved_filtered = $raw_approved;
@@ -238,7 +280,18 @@ class Yayasan extends CI_Controller {
             'all_names'             => $all_names,
             'chart_data_individu'   => $chart_data_individu,
             'chart_data_rundayan'   => $chart_data_rundayan,
-            'rundayan_detail_map'   => $rundayan_detail_map
+            'rundayan_detail_map'   => $rundayan_detail_map,
+
+            // Paginated Section 3 Tables
+            'individu_tbl_paginated' => $individu_tbl_paginated,
+            'total_tbl_individu'     => $total_tbl_individu,
+            'limit_tbl_individu'     => $limit_tbl_individu,
+            'page_tbl_individu'      => $page_tbl_individu,
+
+            'rundayan_tbl_paginated' => $rundayan_tbl_paginated,
+            'total_tbl_rundayan'     => $total_tbl_rundayan,
+            'limit_tbl_rundayan'     => $limit_tbl_rundayan,
+            'page_tbl_rundayan'      => $page_tbl_rundayan,
         ];
 
         $this->load->view('yayasan/rekapitulasi', $data);
