@@ -60,19 +60,23 @@
                         <?= $this->session->userdata('full_name') ?>
                     </span>
                 </div>
-                <div id="desktop-dropdown" class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden" style="opacity:0;visibility:hidden;transform:translateY(8px);transition:all 0.2s ease;z-index:9999;">
+                <div id="desktop-dropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden" style="opacity:0;visibility:hidden;transform:translateY(8px);transition:all 0.2s ease;z-index:9999;">
                     <?php if (in_array($this->session->userdata('role'), ['admin', 'super_admin'])): ?>
-                    <a href="<?= base_url('admin') ?>" class="dd-item flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-display font-medium no-underline">
+                    <a href="<?= base_url('admin') ?>" class="dd-item flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-display font-medium no-underline whitespace-nowrap">
                         <span class="dd-icon"><i class="bi bi-speedometer2"></i></span>
                         Dashboard
                     </a>
                     <?php endif; ?>
-                    <a href="<?= base_url('profile') ?>" class="dd-item flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-display font-medium no-underline">
+                    <a href="<?= base_url('profile') ?>" class="dd-item flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-display font-medium no-underline whitespace-nowrap">
                         <span class="dd-icon"><i class="bi bi-pencil-square"></i></span>
                         Edit Profil
                     </a>
+                    <a href="<?= base_url('user_carousel') ?>" class="dd-item flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-display font-medium no-underline whitespace-nowrap">
+                        <span class="dd-icon"><i class="bi bi-images"></i></span>
+                        Kelola Foto Saya
+                    </a>
                     <hr class="border-gray-200 m-0">
-                    <a href="<?= base_url('auth/logout') ?>" class="dd-item flex items-center gap-3 px-5 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-display font-medium no-underline">
+                    <a href="<?= base_url('auth/logout') ?>" class="dd-item flex items-center gap-3 px-5 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-display font-medium no-underline whitespace-nowrap">
                         <span class="dd-icon"><i class="bi bi-box-arrow-right"></i></span>
                         Logout
                     </a>
@@ -145,6 +149,9 @@
             <?php endif; ?>
             <li>
                 <a href="<?= base_url('profile') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="profile"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><img src="<?= base_url('assets/images/3d_edit_profile.png') ?>" class="w-7 h-7 inline-block mr-2 align-middle object-contain" alt="Edit Profil">Edit Profil</a>
+            </li>
+            <li>
+                <a href="<?= base_url('user_carousel') ?>" class="mobile-link group block py-2 pl-8 hover:text-white transition-colors duration-200" data-page="user_carousel"><span class="arrow-icon" style="display:none;margin-right:8px;">&gt;</span><span class="inline-block w-7 text-center mr-2 align-middle"><i class="bi bi-images text-xl text-[var(--accent-gold)]"></i></span>Kelola Foto Saya</a>
             </li>
         <?php endif; ?>
         <?php if (!$this->session->userdata('logged_in')): ?>

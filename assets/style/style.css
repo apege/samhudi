@@ -373,12 +373,13 @@ nav {
 .carousel-section {
     padding: 80px 0;
     background: linear-gradient(to bottom, var(--bg-carousel-top) 0%, var(--bg-carousel-top) 30%, var(--bg-carousel) 30%, var(--bg-carousel) 100%);
-    overflow: hidden;
+    overflow-x: clip; /* Hanya potong arah horizontal */
+    overflow-y: visible; /* Biarkan kartu tidak terpotong atas/bawah */
 }
 
 .carousel-container {
     position: relative;
-    height: 420px;
+    height: 480px;
     width: 100%;
 }
 
@@ -387,19 +388,21 @@ nav {
     top: 50%;
     left: 50%;
     width: 270px;
-    background-color: #ffffff; /* Menggunakan warna latar dari panel admin */
-    padding: 12px !important; /* Padding 12px sama rata di semua sisi (Symmetric Border) */
-    border-radius: 0;
-    border: 1px solid var(--border-gold);
+    height: 380px !important; /* Tinggi seragam untuk semua kartu */
+    background-color: #ffffff;
+    padding: 12px !important; /* Padding 12px rata di semua sisi */
+    border-radius: 4px;
+    border: none !important;
     box-shadow: 0 8px 20px rgba(0,0,0,.3);
     transition: .6s;
     cursor: pointer;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .carousel-img {
     width: 100%;
-    height: 320px; /* Foto dibuat tinggi agar memenuhi area */
+    height: 356px !important; /* 380px - 24px padding = 356px */
     object-fit: cover;
     display: block;
     border-radius: 2px;
@@ -407,14 +410,14 @@ nav {
 
 .carousel-caption {
     position: absolute !important;
-    bottom: 45px !important; /* Dinaikkan sedikit agar pas di tengah area putih polaroid bawaan foto */
-    left: 12px !important;
-    right: 12px !important;
+    bottom: 24px !important; /* Menempel di atas foto bagian bawah */
+    left: 20px !important;
+    right: 20px !important;
     text-align: center;
     font-family: 'Brittany Signature', cursive;
-    font-size: 20px !important; /* Perbesar font agar lebih terbaca */
-    color: #4a4a4a !important; /* Sesuaikan warna abu gelap/hitam agar senada dengan teks 'Samhudi Gathering' bawaan */
-    text-shadow: none !important; /* Hapus bayangan agar terlihat menyatu alami */
+    font-size: 20px !important;
+    color: #ffffff !important; /* Teks putih agar kontras di atas foto */
+    text-shadow: 0px 2px 6px rgba(0,0,0,0.95), 0px 0px 10px rgba(0,0,0,0.85) !important; /* Bayangan tebal agar terbaca jelas */
     z-index: 15;
 }
 
@@ -425,38 +428,41 @@ nav {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Klik tembus ke card */
+    pointer-events: none;
     z-index: 10;
     background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
 }
 
-/* Kelas khusus jika memilih original (Hanya bingkai warna pinggir + garis emas luar) */
+/* Kelas khusus jika memilih original */
 .carousel-card-original {
     padding: 12px !important;
+    background-color: #ffffff;
 }
 
 .carousel-card-original .carousel-img {
-    height: 320px !important;
+    height: 356px !important;
     object-fit: cover !important;
     border-radius: 2px !important;
 }
 
 .carousel-card-original .carousel-caption {
     position: absolute !important;
-    bottom: 45px !important;
-    left: 12px !important;
-    right: 12px !important;
+    bottom: 24px !important;
+    left: 20px !important;
+    right: 20px !important;
+    color: #ffffff !important;
+    text-shadow: 0px 2px 6px rgba(0,0,0,0.95), 0px 0px 10px rgba(0,0,0,0.85) !important;
 }
 
 .carousel-card-with-frame {
-    position: relative !important;
-    padding: 16px 14px 40px 14px !important;
+    padding: 0 !important;
     border: none !important;
     background-color: transparent !important;
-    box-shadow: none !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,.3) !important;
     box-sizing: border-box !important;
+    border-radius: 4px !important;
 }
 
 .carousel-card-with-frame .card-frame-overlay {
@@ -465,28 +471,35 @@ nav {
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
     pointer-events: none !important;
     z-index: 10 !important;
 }
 
 .carousel-card-with-frame .carousel-img {
-    height: 264px !important;
+    height: 380px !important;
     width: 100% !important;
     object-fit: cover !important;
-    border-radius: 4px !important;
+    padding: 0 !important; /* Foto memenuhi penuh kartu, frame overlay di atasnya */
+    box-sizing: border-box !important;
     position: relative !important;
     z-index: 1 !important;
+    display: block !important;
+    border-radius: 4px !important;
 }
 
 .carousel-card-with-frame .carousel-caption {
     position: absolute !important;
-    bottom: 12px !important;
-    left: 0 !important;
-    right: 0 !important;
+    bottom: 18px !important;
+    left: 12px !important;
+    right: 12px !important;
     margin: 0 auto !important;
     text-align: center !important;
+    font-size: 16px !important;
     color: #ffffff !important;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.9), 0px 0px 8px rgba(0,0,0,0.8) !important;
+    text-shadow: 0px 2px 6px rgba(0,0,0,0.95), 0px 0px 10px rgba(0,0,0,0.85) !important;
     z-index: 15 !important;
 }
 

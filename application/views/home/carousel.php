@@ -1,5 +1,17 @@
 <?php
-$carousel_items    = json_decode(file_get_contents(FCPATH . 'assets/carousel-config.json'), true);
+$carousel_items = json_decode(file_get_contents(FCPATH . 'assets/carousel-config.json'), true) ?: [];
+
+// Gabungkan file carousel milik user
+$user_files = glob(FCPATH . 'assets/carousel-user-*.json');
+if ($user_files) {
+    foreach ($user_files as $ufile) {
+        $uitems = json_decode(file_get_contents($ufile), true);
+        if (is_array($uitems)) {
+            $carousel_items = array_merge($carousel_items, $uitems);
+        }
+    }
+}
+
 $carousel_settings = file_exists(FCPATH . 'assets/carousel-settings.json')
     ? json_decode(file_get_contents(FCPATH . 'assets/carousel-settings.json'), true)
     : [];
@@ -39,10 +51,50 @@ $caption_color = ($brightness > 128) ? '#1f1f1f' : '#ffffff';
             $rgb = sscanf($card_color, '#%02x%02x%02x');
             $brightness = $rgb ? (($rgb[0]*299 + $rgb[1]*587 + $rgb[2]*114) / 1000) : 200;
             $caption_color = ($brightness > 128) ? '#1f1f1f' : '#ffffff';
+
+            $item_frame = !empty($item['frame_style']) ? $item['frame_style'] : 'original';
+            $is_framed = ($item_frame !== 'original');
+            
+            $frame_url = '';
+            if ($item_frame === 'blue_wave') {
+                $frame_url = base_url('assets/images/frame_blue_wave.png');
+            } else if ($item_frame === 'green_vines') {
+                $frame_url = base_url('assets/images/frame_green_vines.png');
+            } else if ($item_frame === 'flowers_stitch') {
+                $frame_url = base_url('assets/images/frame_flowers_stitch.png');
+            } else if ($item_frame === 'yellow_sunflowers') {
+                $frame_url = base_url('assets/images/frame_yellow_sunflowers.png');
+            } else if ($item_frame === 'green_dots') {
+                $frame_url = base_url('assets/images/frame_green_dots.png');
+            } else if ($item_frame === 'green_waves') {
+                $frame_url = base_url('assets/images/frame_green_waves.png');
+            } else if ($item_frame === 'pink_glitter') {
+                $frame_url = base_url('assets/images/frame_pink_glitter.png');
+            } else if ($item_frame === 'purple_stripes') {
+                $frame_url = base_url('assets/images/frame_purple_stripes.png');
+            } else if ($item_frame === 'black_dots') {
+                $frame_url = base_url('assets/images/frame_black_dots.png');
+            } else if ($item_frame === 'orange_spirals') {
+                $frame_url = base_url('assets/images/frame_orange_spirals.png');
+            } else if ($item_frame === 'green_orange_wave') {
+                $frame_url = base_url('assets/images/frame_green_orange_wave.png');
+            } else if ($item_frame === 'abstract_wavy') {
+                $frame_url = base_url('assets/images/frame_abstract_wavy.png');
+            } else if ($item_frame === 'checkered') {
+                $frame_url = base_url('assets/images/frame_checkered.png');
+            } else if ($item_frame === 'zigzag_colorful') {
+                $frame_url = base_url('assets/images/frame_zigzag_colorful.png');
+            } else if ($item_frame === 'ethnic_red') {
+                $frame_url = base_url('assets/images/frame_ethnic_red.png');
+            }
         ?>
-        <div class="card carousel-card carousel-card-original"
+        <div class="card carousel-card <?= $is_framed ? 'carousel-card-with-frame' : 'carousel-card-original' ?>"
              data-rot="<?= $rotations[$i % count($rotations)] ?>"
-             style="background-color: <?= htmlspecialchars($card_color) ?> !important;">
+             style="<?= $is_framed ? 'background-color: transparent !important;' : 'background-color: ' . htmlspecialchars($card_color) . ' !important;' ?>">
+
+            <?php if ($is_framed): ?>
+                <div class="card-frame-overlay" style="background-image: url('<?= $frame_url ?>');"></div>
+            <?php endif; ?>
 
             <img src="<?= base_url('assets/images/' . $item['file']) ?>" class="carousel-img">
             <div class="carousel-caption" style="color: <?= $caption_color ?>;">
@@ -56,111 +108,8 @@ $caption_color = ($brightness > 128) ? '#1f1f1f' : '#ffffff';
 
     <!-- Tombol Selengkapnya / Lihat Semua Foto -->
     <div class="flex justify-center mt-12 mb-6">
-        <button onclick="openCarouselGalleryModal()" class="px-6 py-2.5 rounded-full border border-[var(--border-gold)] text-[var(--accent-gold)] hover:bg-[var(--accent-gold)] hover:text-[var(--bg-body)] font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg backdrop-blur-sm bg-white/5">
+        <a href="<?= base_url('home/gallery') ?>" class="px-6 py-2.5 rounded-full border border-[var(--border-gold)] text-[var(--accent-gold)] hover:bg-[var(--accent-gold)] hover:text-[var(--bg-body)] font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg backdrop-blur-sm bg-white/5">
             <i class="bi bi-grid-3x3-gap-fill text-lg"></i> Lihat Semua Foto
-        </button>
+        </a>
     </div>
 </section>
-
-<!-- Modal Gallery -->
-<div id="carouselGalleryModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4 transition-all duration-300">
-    <!-- Backdrop with blur -->
-    <div class="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity duration-300" onclick="closeCarouselGalleryModal()"></div>
-    
-    <!-- Modal Content -->
-    <div class="relative bg-[var(--bg-card)] border border-[var(--border-gold)] w-full max-w-6xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden transform scale-95 opacity-0 transition-all duration-300 z-10">
-        
-        <!-- Header -->
-        <div class="flex items-center justify-between p-6 border-b border-[var(--border-card)]">
-            <div>
-                <h3 class="font-display font-bold text-2xl text-[var(--text-heading)]">Galeri Foto Keluarga</h3>
-                <p class="text-xs text-[var(--text-muted)] mt-1">Kumpulan dokumentasi foto Keluarga Besar H.M. Samhudi</p>
-            </div>
-            <button onclick="closeCarouselGalleryModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--border-card)]/10 text-[var(--text-heading)] hover:bg-[var(--border-gold)] hover:text-white transition-all">
-                <i class="bi bi-x-lg text-lg"></i>
-            </button>
-        </div>
-        
-        <!-- Body -->
-        <div class="flex-1 overflow-y-auto p-6">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <?php foreach ($carousel_items as $item): ?>
-                <div class="group relative bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col cursor-pointer" onclick="viewFullscreenImage('<?= base_url('assets/images/' . $item['file']) ?>', '<?= htmlspecialchars($item['caption']) ?>')">
-                    <div class="aspect-[4/3] w-full overflow-hidden bg-black/5">
-                        <img src="<?= base_url('assets/images/' . $item['file']) ?>" alt="<?= htmlspecialchars($item['caption']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <div class="p-3 text-center flex-grow flex items-center justify-center bg-[var(--bg-card)]">
-                        <p class="text-sm font-medium text-[var(--text-body)] font-display line-clamp-2"><?= htmlspecialchars($item['caption']) ?></p>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Fullscreen Lightbox Modal -->
-<div id="carouselLightbox" class="fixed inset-0 z-[10000] hidden flex items-center justify-center bg-black/95 p-4 transition-all duration-300" onclick="closeCarouselLightbox()">
-    <button class="absolute top-4 right-4 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all z-20">
-        <i class="bi bi-x-lg text-xl"></i>
-    </button>
-    <div class="relative max-w-5xl max-h-[90vh] flex flex-col items-center justify-center z-10" onclick="event.stopPropagation()">
-        <img id="lightboxImg" src="" alt="" class="max-w-full max-h-[80vh] object-contain rounded shadow-2xl">
-        <p id="lightboxCaption" class="text-white font-display text-lg text-center mt-4 tracking-wide px-4"></p>
-    </div>
-</div>
-
-<script>
-function openCarouselGalleryModal() {
-    const modal = document.getElementById('carouselGalleryModal');
-    const content = modal.querySelector('.relative');
-    
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    // Force reflow
-    modal.offsetHeight;
-    
-    content.classList.remove('scale-95', 'opacity-0');
-    content.classList.add('scale-100', 'opacity-100');
-    document.body.style.overflow = 'hidden'; // prevent scrolling behind
-}
-
-function closeCarouselGalleryModal() {
-    const modal = document.getElementById('carouselGalleryModal');
-    const content = modal.querySelector('.relative');
-    
-    content.classList.remove('scale-100', 'opacity-100');
-    content.classList.add('scale-95', 'opacity-0');
-    
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = '';
-    }, 300);
-}
-
-function viewFullscreenImage(src, caption) {
-    const lightbox = document.getElementById('carouselLightbox');
-    const img = document.getElementById('lightboxImg');
-    const captionEl = document.getElementById('lightboxCaption');
-    
-    img.src = src;
-    captionEl.textContent = caption;
-    
-    lightbox.classList.remove('hidden');
-    lightbox.classList.add('flex');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeCarouselLightbox() {
-    const lightbox = document.getElementById('carouselLightbox');
-    lightbox.classList.add('hidden');
-    lightbox.classList.remove('flex');
-    if (!document.getElementById('carouselGalleryModal').classList.contains('hidden')) {
-        // Keep overflow hidden if gallery is still open
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = '';
-    }
-}
-</script>
