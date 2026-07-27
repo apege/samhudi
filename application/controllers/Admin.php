@@ -55,84 +55,186 @@ class Admin extends CI_Controller
 
         // Handle carousel upload & caption update
         $carousel_config_path = FCPATH . 'assets/carousel-config.json';
+        $this->load->model('User_model');
 
         if ($this->input->method() === 'post' && $this->input->post('save_carousel')) {
-            $carousel = json_decode(file_get_contents($carousel_config_path), true);
-            $captions     = $this->input->post('captions') ?: [];
+            // Baca active_photo di paling awal sebelum redirect apapun
+            $active_photo = $this->input->post('active_photo_index');
+            if ($active_photo !== null && $active_photo !== '') {
+                $this->session->set_userdata('admin_active_photo', (int)$active_photo);
+            }
+            $active_param = ($active_photo !== null && $active_photo !== '') ? '?active_photo=' . (int)$active_photo : '';
+
+            $captions = $this->input->post('captions') ?: [];
+            if (empty($captions)) {
+                // Jangan kosongkan config jika data post tidak valid
+                redirect('admin' . $active_param . '#carousel-section');
+            }
+
+            $sources = $this->input->post('carousel_item_source') ?: [];
+            $existing_files = $this->input->post('carousel_item_file') ?: [];
             $item_colors  = $this->input->post('carousel_item_color') ?: [];
             $item_frames  = $this->input->post('carousel_item_frame') ?: [];
 
-            $upload_path = $images_path . 'family/';
             $files = $_FILES['carousel_file'];
+            $count = count($captions);
 
-            $count = max(count($captions), is_array($files['name']) ? count($files['name']) : 0);
-            $new_carousel = [];
+            // Group items by source
+            $grouped_items = [
+                'admin' => []
+            ];
+
+            // Initialize all existing user configs in grouping to allow empty states if deleted
+            $user_files = glob(FCPATH . 'assets/carousel-user-*.json');
+            if ($user_files) {
+                foreach ($user_files as $ufile) {
+                    preg_match('/carousel-user-(\d+)\.json/', $ufile, $matches);
+                    if (isset($matches[1])) {
+                        $grouped_items['user-' . $matches[1]] = [];
+                    }
+                }
+            }
+
             $hex_pattern = '/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/';
 
             for ($i = 0; $i < $count; $i++) {
+                $source = $sources[$i] ?? 'admin';
                 $caption = $captions[$i] ?? 'Keluarga';
-                $file = isset($carousel[$i]) ? $carousel[$i]['file'] : null;
+                $file = $existing_files[$i] ?? null;
 
                 // Per-item frame style
-                $item_frame = $item_frames[$i] ?? ($carousel[$i]['frame_style'] ?? 'original');
-                if (!in_array($item_frame, ['original', 'ethnic', 'gold'])) {
+                $item_frame = $item_frames[$i] ?? 'original';
+                if (!in_array($item_frame, ['original', 'green_vines', 'blue_wave', 'flowers_stitch', 'yellow_sunflowers', 'green_dots', 'green_waves', 'pink_glitter', 'purple_stripes', 'black_dots', 'orange_spirals', 'green_orange_wave', 'abstract_wavy', 'checkered', 'zigzag_colorful', 'ethnic_red'])) {
                     $item_frame = 'original';
                 }
 
                 // Per-item frame color
-                $item_color = $item_colors[$i] ?? ($carousel[$i]['frame_color'] ?? null);
-                if (!$item_color || !preg_match($hex_pattern, $item_color)) $item_color = null;
+                $item_color = $item_colors[$i] ?? '#ffffff';
+                if (!$item_color || !preg_match($hex_pattern, $item_color)) $item_color = '#ffffff';
 
+                // File upload
                 if (!empty($files['name'][$i]) && $files['error'][$i] === 0) {
-                    if (!is_dir($upload_path)) mkdir($upload_path, 0777, true);
                     $ext = pathinfo($files['name'][$i], PATHINFO_EXTENSION);
                     $base_name = 'carousel_' . time() . '_' . $i;
                     $new_name = $base_name . '.' . $ext;
-                    
-                    $target_file = $upload_path . $new_name;
-                    move_uploaded_file($files['tmp_name'][$i], $target_file);
-                    
-                    // Cek opsi hapus background (jika ada checkbox active untuk index ini)
-                    $remove_bg_active = $this->input->post('remove_bg_' . $i);
-                    if ($remove_bg_active) {
-                        $this->_remove_image_background($target_file);
-                        // Setelah diolah background removal, filenya berubah format menjadi png
-                        $new_name = $base_name . '.png';
+
+                    if ($source === 'admin') {
+                        $upload_path = $images_path . 'family/';
+                        if (!is_dir($upload_path)) mkdir($upload_path, 0777, true);
+                        $target_file = $upload_path . $new_name;
+                        move_uploaded_file($files['tmp_name'][$i], $target_file);
+
+                        // Cek opsi hapus background
+                        $remove_bg_active = $this->input->post('remove_bg_' . $i);
+                        if ($remove_bg_active) {
+                            $this->_remove_image_background($target_file);
+                            $new_name = $base_name . '.png';
+                        }
+                        $file = 'family/' . $new_name;
+                    } else {
+                        // User uploaded photo
+                        $upload_path = $images_path . 'user_carousel/';
+                        if (!is_dir($upload_path)) mkdir($upload_path, 0777, true);
+                        $target_file = $upload_path . $new_name;
+                        move_uploaded_file($files['tmp_name'][$i], $target_file);
+                        $file = 'user_carousel/' . $new_name;
                     }
-                    
-                    $file = 'family/' . $new_name;
                 } else {
-                    // Jika foto lama, tapi tombol hapus background diklik secara manual
+                    // Manual background removal check (for admin items)
                     $manual_remove_bg = $this->input->post('manual_remove_bg_' . $i);
                     if ($manual_remove_bg && $file && file_exists($images_path . $file)) {
                         $this->_remove_image_background($images_path . $file);
-                        // Update path ekstensi di config
                         $path_info = pathinfo($file);
                         $file = $path_info['dirname'] . '/' . $path_info['filename'] . '.png';
                     }
                 }
 
                 if ($file) {
-                    $entry = ['file' => $file, 'caption' => $caption, 'frame_style' => $item_frame];
-                    if ($item_color) $entry['frame_color'] = $item_color;
-                    $new_carousel[] = $entry;
+                    $entry = [
+                        'file'        => $file,
+                        'caption'     => $caption,
+                        'frame_style' => $item_frame,
+                        'frame_color' => $item_color
+                    ];
+                    $grouped_items[$source][] = $entry;
                 }
             }
 
-            file_put_contents($carousel_config_path, json_encode($new_carousel));
+            // Save admin items
+            file_put_contents($carousel_config_path, json_encode($grouped_items['admin']));
+
+            // Save user items to their respective files
+            foreach ($grouped_items as $src => $items) {
+                if ($src === 'admin') continue;
+                if (preg_match('/^user-(\d+)$/', $src, $matches)) {
+                    $uid = (int)$matches[1];
+                    $user_json_path = FCPATH . 'assets/carousel-user-' . $uid . '.json';
+                    file_put_contents($user_json_path, json_encode($items));
+                }
+            }
+
             $this->session->set_flashdata('carousel_success', 'Carousel berhasil diperbarui.');
-            redirect('admin#carousel-section');
+            redirect('admin' . $active_param . '#carousel-section');
         }
 
         if ($this->input->method() === 'post' && $this->input->post('delete_carousel')) {
-            $index = $this->input->post('delete_index');
-            $carousel = json_decode(file_get_contents($carousel_config_path), true);
-            if (isset($carousel[$index])) {
-                $file_path = $images_path . $carousel[$index]['file'];
-                if (file_exists($file_path)) unlink($file_path);
-                array_splice($carousel, $index, 1);
-                file_put_contents($carousel_config_path, json_encode($carousel));
+            $index = (int)$this->input->post('delete_index');
+
+            // Reconstruct the exact combined items to identify source & offset
+            $admin_items = json_decode(file_get_contents($carousel_config_path), true) ?: [];
+            foreach ($admin_items as $i => &$item) {
+                $item['source'] = 'admin';
+                $item['index_in_source'] = $i;
             }
+            unset($item);
+
+            $user_files = glob(FCPATH . 'assets/carousel-user-*.json');
+            $user_items = [];
+            if ($user_files) {
+                foreach ($user_files as $ufile) {
+                    preg_match('/carousel-user-(\d+)\.json/', $ufile, $matches);
+                    $uid = isset($matches[1]) ? (int)$matches[1] : 0;
+                    
+                    $uitems = json_decode(file_get_contents($ufile), true);
+                    if (is_array($uitems)) {
+                        foreach ($uitems as $i => &$uitem) {
+                            $uitem['source'] = 'user-' . $uid;
+                            $uitem['index_in_source'] = $i;
+                        }
+                        unset($uitem);
+                        $user_items = array_merge($user_items, $uitems);
+                    }
+                }
+            }
+            $carousel_items = array_merge($admin_items, $user_items);
+
+            if (isset($carousel_items[$index])) {
+                $item_to_delete = $carousel_items[$index];
+                $file_path = $images_path . $item_to_delete['file'];
+                if (file_exists($file_path)) unlink($file_path);
+
+                $source = $item_to_delete['source'];
+                $idx_in_source = $item_to_delete['index_in_source'];
+
+                if ($source === 'admin') {
+                    array_splice($admin_items, $idx_in_source, 1);
+                    // Remove temporary properties before saving
+                    foreach ($admin_items as &$it) {
+                        unset($it['source'], $it['index_in_source']);
+                    }
+                    unset($it);
+                    file_put_contents($carousel_config_path, json_encode($admin_items));
+                } else if (preg_match('/^user-(\d+)$/', $source, $matches)) {
+                    $uid = (int)$matches[1];
+                    $user_json_path = FCPATH . 'assets/carousel-user-' . $uid . '.json';
+                    $uitems = json_decode(file_get_contents($user_json_path), true) ?: [];
+                    if (isset($uitems[$idx_in_source])) {
+                        array_splice($uitems, $idx_in_source, 1);
+                        file_put_contents($user_json_path, json_encode($uitems));
+                    }
+                }
+            }
+
             redirect('admin#carousel-section');
         }
 
@@ -149,10 +251,16 @@ class Admin extends CI_Controller
             $hex_pattern = '/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/';
             if (!preg_match($hex_pattern, $frame_color)) $frame_color = '#ffffff';
 
+            $active_photo = $this->input->post('active_photo_index');
+            if ($active_photo !== null && $active_photo !== '') {
+                $this->session->set_userdata('admin_active_photo', (int)$active_photo);
+            }
+            $active_param = ($active_photo !== null && $active_photo !== '') ? '?active_photo=' . (int)$active_photo : '';
+
             $settings = ['frame' => $frame, 'frame_color' => $frame_color];
             file_put_contents($carousel_settings_path, json_encode($settings));
             $this->session->set_flashdata('carousel_settings_success', 'Pengaturan tampilan carousel berhasil disimpan.');
-            redirect('admin#carousel-section');
+            redirect('admin' . $active_param . '#carousel-section');
         }
 
 
@@ -276,6 +384,47 @@ class Admin extends CI_Controller
             ? json_decode(file_get_contents($carousel_settings_path), true)
             : ['frame' => 'gold', 'bg_top' => '#8F9F9F', 'bg_bottom' => '#274D4F'];
 
+        $this->load->model('User_model');
+        $user_cache = [];
+
+        $admin_items = json_decode(file_get_contents($carousel_config_path), true) ?: [];
+        foreach ($admin_items as $i => &$item) {
+            $item['source'] = 'admin';
+            $item['index_in_source'] = $i;
+            $item['uploader_name'] = 'Admin';
+        }
+        unset($item);
+
+        $user_files = glob(FCPATH . 'assets/carousel-user-*.json');
+        $user_items = [];
+        if ($user_files) {
+            foreach ($user_files as $ufile) {
+                preg_match('/carousel-user-(\d+)\.json/', $ufile, $matches);
+                $uid = isset($matches[1]) ? (int)$matches[1] : 0;
+                $user_name = 'User #' . $uid;
+                if ($uid > 0) {
+                    if (!isset($user_cache[$uid])) {
+                        $u = $this->User_model->get_by_id($uid);
+                        $user_cache[$uid] = $u ? $u->full_name : 'User #' . $uid;
+                    }
+                    $user_name = $user_cache[$uid];
+                }
+
+                $uitems = json_decode(file_get_contents($ufile), true);
+                if (is_array($uitems)) {
+                    foreach ($uitems as $i => &$uitem) {
+                        $uitem['source'] = 'user-' . $uid;
+                        $uitem['index_in_source'] = $i;
+                        $uitem['user_id'] = $uid;
+                        $uitem['uploader_name'] = $user_name;
+                    }
+                    unset($uitem);
+                    $user_items = array_merge($user_items, $uitems);
+                }
+            }
+        }
+        $carousel_items = array_merge($admin_items, $user_items);
+
         $data = [
             'admin_name'        => $this->session->userdata('full_name'),
             'admin_role'        => $this->session->userdata('role'),
@@ -286,7 +435,7 @@ class Admin extends CI_Controller
             'recent_activities' => $this->Admin_model->get_recent_activities(5),
             'highlighted_news'  => $this->Admin_model->get_highlighted_news(),
             'selected_banner'   => $banner_config['file'] ?? 'background2.png',
-            'carousel_items'    => json_decode(file_get_contents($carousel_config_path), true),
+            'carousel_items'    => $carousel_items,
             'intro_text'        => $intro_config['text'] ?? "Dengan rasa syukur dan bangga,\nkami persembahkan website ini\nsebagai ruang digital untuk\nmenyambung tali silaturahmi",
             'intro_sender'      => $intro_config['sender'] ?? 'From (nama)',
             'sambutan_title'    => $sambutan_config['title'] ?? "Assalamu'alaikum Warahmatullahi Wabarakatuh,",

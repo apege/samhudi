@@ -42,6 +42,17 @@ class Home extends CI_Controller {
     }
 
     /**
+     * Halaman Galeri Foto Keluarga
+     */
+    public function gallery()
+    {
+        $this->load->view('templates/header');
+        $this->load->view('partials/navbar');
+        $this->load->view('home/gallery');
+        $this->load->view('templates/footer');
+    }
+
+    /**
      * Halaman daftar semua berita
      */
     public function berita($page = 0)

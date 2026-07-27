@@ -71,6 +71,13 @@ $route['berita/(:any)']             = 'home/berita_detail/$1';
 $route['profile']                   = 'Profile/index';
 $route['profile/update']            = 'Profile/update';
 
+// User Carousel Routes
+$route['user_carousel']             = 'UserCarousel/index';
+$route['user_carousel/add']         = 'UserCarousel/add';
+$route['user_carousel/update']      = 'UserCarousel/update';
+$route['user_carousel/delete']      = 'UserCarousel/delete';
+
+
 // Linkedin Routes
 $route['linkedin']                  = 'linkedin/index';
 $route['linkedin/create_job']       = 'linkedin/create_job';
