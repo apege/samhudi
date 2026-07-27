@@ -24,7 +24,7 @@
             ?>
 
             <!-- Main / Featured Card -->
-            <div class="col-lg-6">
+            <div class="col-lg-6 d-flex flex-column">
                 <div class="news-wrapper h-100 reveal reveal-slide-right" style="position:relative;">
                     <?php if (!empty($highlighted_news)): ?>
                     <span style="position:absolute;top:14px;left:14px;z-index:10;
@@ -37,23 +37,23 @@
                     </span>
                     <?php endif; ?>
                     <img src="<?php echo !empty($main_news['thumbnail']) && file_exists('./' . $main_news['thumbnail']) ? base_url($main_news['thumbnail']) : base_url('assets/images/berita/berita1.png'); ?>"
-                         class="img-fluid w-100 news-img-main"
-                         style="object-fit: cover; height: 100%; min-height: 400px;">
+                         class="img-fluid w-100 news-img-grid"
+                         style="object-fit: cover; height: 100%; min-height: 396px;">
                     <div class="news-overlay"></div>
-                    <div class="news-content-main">
-                        <h5 class="news-title-main">
+                    <div class="news-content-grid">
+                        <h6 class="news-title-grid">
                             <?php echo htmlspecialchars($main_news['title']); ?>
-                        </h5>
-                        <a href="<?php echo base_url('berita/' . $main_news['slug']); ?>" class="news-link-main" style="text-decoration:none;">
-                            BACA SELENGKAPNYA →
+                        </h6>
+                        <a href="<?php echo base_url('berita/' . $main_news['slug']); ?>" style="text-decoration:none;">
+                            <small class="news-link-grid text-white">BACA SELENGKAPNYA</small>
                         </a>
                     </div>
                 </div>
             </div>
 
             <?php if (!empty($grid_news)): ?>
-            <div class="col-lg-6">
-                <div class="row g-3 h-100">
+            <div class="col-lg-6 d-flex flex-column">
+                <div class="row g-3 h-100 flex-grow-1">
                     <?php foreach ($grid_news as $i => $news): ?>
                     <div class="col-6">
                         <div class="news-wrapper h-100 reveal reveal-slide-left delay-<?= ($i + 1) * 100 + 100 ?>">
