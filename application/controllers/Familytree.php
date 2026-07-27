@@ -8,6 +8,7 @@ class Familytree extends CI_Controller
     {
         parent::__construct();
         $this->load->model('Family_model');
+        $this->load->model('Log_model');
         $this->load->library('session');
         $this->load->helper('url');
 
@@ -249,6 +250,7 @@ class Familytree extends CI_Controller
         $result = $this->Family_model->insert_new_member($data, $role, $processed_rel_ids);
         
         if (isset($result['status']) && $result['status']) {
+            $this->Log_model->insert_log($this->session->userdata('user_id'), $this->session->userdata('full_name') ?: 'User', $this->session->userdata('role') ?: 'member', 'Menambahkan anggota silsilah baru: ' . ($data['full_name'] ?? ''));
             echo json_encode(['status' => true, 'message' => 'Berhasil menambahkan data keluarga.', 'id' => $result['id'] ?? null]);
         } else {
             $msg = $result['message'] ?? 'Gagal menambahkan data, pastikan relasi valid.';
@@ -329,6 +331,8 @@ class Familytree extends CI_Controller
 
             $this->db->where('id', $id);
             $this->db->update('family_members', $data);
+
+            $this->Log_model->insert_log($this->session->userdata('user_id'), $this->session->userdata('full_name') ?: 'User', $this->session->userdata('role') ?: 'member', 'Mengubah data silsilah profil ID ' . $id . ': ' . ($data['full_name'] ?? $member['full_name']));
 
             $this->session->set_flashdata('success', 'Data berhasil diubah.');
             redirect('familytree');
@@ -479,6 +483,8 @@ class Familytree extends CI_Controller
             }
             $this->load->model('Silsilah_model');
             $this->Silsilah_model->sync_marriages($id, $update_data['gender'], $spouses);
+
+            $this->Log_model->insert_log($this->session->userdata('user_id'), $this->session->userdata('full_name') ?: 'User', $this->session->userdata('role') ?: 'member', 'Mengubah data silsilah profil ID ' . $id . ' via wizard: ' . ($update_data['full_name'] ?? ''));
 
             echo json_encode(['status' => true, 'message' => 'Data berhasil diperbarui.']);
         } else {
