@@ -79,7 +79,7 @@ $init_overlay_bg = isset($frame_images[$init_frame]) ? base_url('assets/images/'
     position: relative !important;
     width: 170px !important;
     height: 239px !important;
-    background-color: #ffffff !important;
+    background-color: #ffffff;
     border-radius: 4px !important;
     box-shadow: 0 8px 20px rgba(0,0,0,.3) !important;
     overflow: hidden !important;
@@ -91,12 +91,11 @@ $init_overlay_bg = isset($frame_images[$init_frame]) ? base_url('assets/images/'
 
 .preview-card-container.with-frame {
     padding: 0 !important;
-    background-color: transparent !important;
 }
 
 .preview-card-container.original {
     padding: 7px !important;
-    background-color: #ffffff !important;
+    background-color: #ffffff;
 }
 
 .preview-card-container img {

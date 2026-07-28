@@ -459,7 +459,6 @@ nav {
 .carousel-card-with-frame {
     padding: 0 !important;
     border: none !important;
-    background-color: transparent !important;
     box-shadow: 0 8px 20px rgba(0,0,0,.3) !important;
     box-sizing: border-box !important;
     border-radius: 4px !important;
@@ -482,7 +481,7 @@ nav {
     height: 380px !important;
     width: 100% !important;
     object-fit: cover !important;
-    padding: 0 !important; /* Foto memenuhi penuh kartu, frame overlay di atasnya */
+    padding: 12px 10px 12px 10px !important; /* Foto berada di dalam bingkai, tidak meluber keluar */
     box-sizing: border-box !important;
     position: relative !important;
     z-index: 1 !important;
