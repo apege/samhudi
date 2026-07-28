@@ -1649,6 +1649,7 @@ class Admin extends CI_Controller
                 'y'          => (int) $c['votes_count'],
                 'nominators' => $c['nominator_name'],
                 'ancestors'  => $c['ancestor_name'],
+                'roles'      => $c['roles_text'],
                 'breakdown'  => $c['breakdown_text']
             ];
         }
@@ -1660,30 +1661,34 @@ class Admin extends CI_Controller
                 'y'          => (int) $c['votes_count'],
                 'nominators' => $c['nominator_name'],
                 'ancestors'  => $c['ancestor_name'],
+                'roles'      => $c['roles_text'],
                 'breakdown'  => $c['breakdown_text']
             ];
         }
 
         $rundayan_detail_map = [];
         foreach ($raw_approved as $c) {
-            $anc = trim($c['ancestor_name']);
+            $anc_list = array_map('trim', explode(',', $c['ancestor_name']));
             $nom = trim($c['nominator_name']);
-            if (!isset($rundayan_detail_map[$anc])) {
-                $rundayan_detail_map[$anc] = [
-                    'ancestor_name' => $anc,
-                    'nominators'    => [],
-                    'candidates'    => [],
-                    'total_votes'   => 0
-                ];
+            foreach ($anc_list as $anc) {
+                if (empty($anc)) continue;
+                if (!isset($rundayan_detail_map[$anc])) {
+                    $rundayan_detail_map[$anc] = [
+                        'ancestor_name' => $anc,
+                        'nominators'    => [],
+                        'candidates'    => [],
+                        'total_votes'   => 0
+                    ];
+                }
+                $rundayan_detail_map[$anc]['nominators'][] = $nom;
+                $rundayan_detail_map[$anc]['candidates'][] = $c['candidate_name'];
             }
-            $rundayan_detail_map[$anc]['nominators'][] = $nom;
-            $rundayan_detail_map[$anc]['candidates'][] = $c['candidate_name'];
-            $rundayan_detail_map[$anc]['total_votes'] += 1;
         }
 
         foreach ($rundayan_detail_map as $anc_key => $data_anc) {
             $rundayan_detail_map[$anc_key]['nominators'] = array_values(array_unique($data_anc['nominators']));
             $rundayan_detail_map[$anc_key]['candidates'] = array_values(array_unique($data_anc['candidates']));
+            $rundayan_detail_map[$anc_key]['total_votes'] = count($rundayan_detail_map[$anc_key]['nominators']);
         }
 
         $data = [
@@ -1715,9 +1720,14 @@ class Admin extends CI_Controller
             'all_names'           => $all_names,
 
             // 3D Chart & Hover data
-            'chart_data_individu' => $chart_data_individu,
-            'chart_data_rundayan' => $chart_data_rundayan,
-            'rundayan_detail_map' => $rundayan_detail_map
+            'chart_data_individu'         => $chart_data_individu,
+            'chart_data_rundayan'         => $chart_data_rundayan,
+            'rundayan_detail_map'         => $rundayan_detail_map,
+
+            // Ringkasan Suara Masuk
+            'total_suara_masuk'           => count($raw_approved),
+            'total_suara_individu'        => array_sum(array_column($chart_data_individu, 'y')),
+            'total_suara_rundayan'        => array_sum(array_column($chart_data_rundayan, 'y'))
         ];
 
         $this->load->view('admin/yayasan/index', $data);

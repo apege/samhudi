@@ -66,23 +66,27 @@ class Yayasan extends CI_Controller {
             }
 
             // Map detail per rundayan for Hover feature
-            if (!isset($rundayan_detail_map[$anc])) {
-                $rundayan_detail_map[$anc] = [
-                    'ancestor_name' => $anc,
-                    'nominators'    => [],
-                    'candidates'    => [],
-                    'total_votes'   => 0
-                ];
+            $anc_list = array_map('trim', explode(',', $anc));
+            foreach ($anc_list as $single_anc) {
+                if (empty($single_anc)) continue;
+                if (!isset($rundayan_detail_map[$single_anc])) {
+                    $rundayan_detail_map[$single_anc] = [
+                        'ancestor_name' => $single_anc,
+                        'nominators'    => [],
+                        'candidates'    => [],
+                        'total_votes'   => 0
+                    ];
+                }
+                $rundayan_detail_map[$single_anc]['nominators'][] = $nom;
+                $rundayan_detail_map[$single_anc]['candidates'][] = $c['candidate_name'];
             }
-            $rundayan_detail_map[$anc]['nominators'][] = $nom;
-            $rundayan_detail_map[$anc]['candidates'][] = $c['candidate_name'];
-            $rundayan_detail_map[$anc]['total_votes'] += 1;
         }
 
         // Clean & unique detail map per rundayan
         foreach ($rundayan_detail_map as $anc_key => $data) {
             $rundayan_detail_map[$anc_key]['nominators'] = array_values(array_unique($data['nominators']));
             $rundayan_detail_map[$anc_key]['candidates'] = array_values(array_unique($data['candidates']));
+            $rundayan_detail_map[$anc_key]['total_votes'] = count($rundayan_detail_map[$anc_key]['nominators']);
         }
 
         $individu_candidates = [];
@@ -228,6 +232,7 @@ class Yayasan extends CI_Controller {
                 'y'          => (int) $c['votes_count'],
                 'nominators' => $c['nominator_name'],
                 'ancestors'  => $c['ancestor_name'],
+                'roles'      => $c['roles_text'],
                 'breakdown'  => $c['breakdown_text']
             ];
         }
@@ -239,6 +244,7 @@ class Yayasan extends CI_Controller {
                 'y'          => (int) $c['votes_count'],
                 'nominators' => $c['nominator_name'],
                 'ancestors'  => $c['ancestor_name'],
+                'roles'      => $c['roles_text'],
                 'breakdown'  => $c['breakdown_text']
             ];
         }
@@ -292,6 +298,11 @@ class Yayasan extends CI_Controller {
             'total_tbl_rundayan'     => $total_tbl_rundayan,
             'limit_tbl_rundayan'     => $limit_tbl_rundayan,
             'page_tbl_rundayan'      => $page_tbl_rundayan,
+
+            // Ringkasan Suara Masuk
+            'total_suara_masuk'      => count($raw_approved),
+            'total_suara_individu'   => array_sum(array_column($chart_data_individu, 'y')),
+            'total_suara_rundayan'   => array_sum(array_column($chart_data_rundayan, 'y'))
         ];
 
         $this->load->view('yayasan/rekapitulasi', $data);
