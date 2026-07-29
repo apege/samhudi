@@ -31,11 +31,12 @@ class Rundayan extends CI_Controller {
         // Group candidates by name
         $grouped = [];
         foreach ($raw_candidates as $c) {
-            $key = strtolower(trim($c['candidate_name']));
+            $displayName = normalize_candidate_name($c['candidate_name']);
+            $key = strtolower(trim($displayName));
             if (!isset($grouped[$key])) {
                 $grouped[$key] = [
                     'id'             => $c['id'],
-                    'candidate_name' => $c['candidate_name'],
+                    'candidate_name' => $displayName,
                     'ancestor_name'  => $c['ancestor_name'],
                     'type'           => 'rundayan',
                     'nominators'     => [trim($c['nominator_name'])],
@@ -115,7 +116,6 @@ class Rundayan extends CI_Controller {
         $data['all_names'] = $unique_names;
 
         $this->load->view('templates/header');
-        $this->load->view('partials/navbar');
         $this->load->view('yayasan/index', $data);
         $this->load->view('templates/footer');
     }
@@ -359,7 +359,6 @@ class Rundayan extends CI_Controller {
         ])->result_array();
 
         $this->load->view('templates/header');
-        $this->load->view('partials/navbar');
         $this->load->view('yayasan/detail', $data);
         $this->load->view('templates/footer');
     }
@@ -396,7 +395,6 @@ class Rundayan extends CI_Controller {
         $data['receipt_url'] = current_url() . '?' . $_SERVER['QUERY_STRING'];
 
         $this->load->view('templates/header');
-        $this->load->view('partials/navbar');
         $this->load->view('yayasan/bukti', $data);
         $this->load->view('templates/footer');
     }

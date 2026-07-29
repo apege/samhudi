@@ -301,36 +301,93 @@ if (!function_exists('render_custom_pagination')) {
             </div>
             <?php endif; ?>
 
-            <!-- RINGKASAN TOTAL SUARA MASUK (SUMMARY STAT CARDS) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-gradient-to-br from-[#1b332e] to-[#122320] border border-amber-500/30 rounded-2xl p-5 shadow-xl flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
-                        <i class="bi bi-inbox-fill text-amber-400 text-2xl"></i>
-                    </div>
+            <!-- RINGKASAN STATUS INPUT 14 RUNDAYAN -->
+            <?php 
+                $count_submitted = count(array_filter($rundayan_input_status ?? [], function($r) { return $r['has_input']; }));
+                $count_pending   = 14 - $count_submitted;
+                $sum_rundayan_votes = array_sum(array_column($rundayan_input_status ?? [], 'vote_count'));
+            ?>
+            <div class="bg-gradient-to-br from-[#1b332e] to-[#122320] border border-teal-700/40 rounded-2xl p-5 shadow-xl space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-teal-700/30 pb-3">
                     <div>
-                        <span class="text-xs text-white/50 font-medium uppercase tracking-wider block">Total Suara Masuk</span>
-                        <div class="text-2xl font-black text-amber-300 mt-0.5"><?= number_format($total_suara_masuk ?? 0) ?> <span class="text-xs font-semibold text-white/60">Suara</span></div>
+                        <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+                            <i class="bi bi-card-checklist text-amber-400 text-lg"></i> Keterangan Status Input 14 Rundayan
+                        </h4>
+                        <p class="text-xs text-white/50">Daftar kelengkapan inputan suara khusus 14 Rundayan Samhudi.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                        <span class="px-3 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-xl">
+                            <i class="bi bi-box-seam-fill mr-1"></i> Total Suara Rundayan: <strong class="text-cyan-200"><?= number_format($sum_rundayan_votes) ?></strong> Suara
+                        </span>
+                        <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl">
+                            <i class="bi bi-check-circle-fill mr-1"></i> <?= $count_submitted ?> Sudah Input
+                        </span>
+                        <span class="px-3 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl">
+                            <i class="bi bi-x-circle-fill mr-1"></i> <?= $count_pending ?> Belum Input
+                        </span>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-br from-[#1b332e] to-[#122320] border border-emerald-500/30 rounded-2xl p-5 shadow-xl flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                        <i class="bi bi-person-fill text-emerald-400 text-2xl"></i>
-                    </div>
-                    <div>
-                        <span class="text-xs text-white/50 font-medium uppercase tracking-wider block">Jumlah Suara Masuk Kategori Individu</span>
-                        <div class="text-2xl font-black text-emerald-300 mt-0.5"><?= number_format($total_suara_individu ?? 0) ?> <span class="text-xs font-semibold text-white/60">Suara</span></div>
-                    </div>
-                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                    <?php if (!empty($rundayan_input_status)): ?>
+                        <?php foreach ($rundayan_input_status as $r): ?>
+                            <?php 
+                                $rName = $r['name'];
+                                $mDetail = $rundayan_modal_data[$rName] ?? null;
+                                $candList = [];
+                                if ($mDetail && !empty($mDetail['candidates'])) {
+                                    $cMap = [];
+                                    foreach ($mDetail['candidates'] as $entry) {
+                                        $cMap[$entry] = ($cMap[$entry] ?? 0) + 1;
+                                    }
+                                    arsort($cMap);
+                                    foreach ($cMap as $cand => $cnt) {
+                                        $candList[] = htmlspecialchars($cand) . ' <span class="text-emerald-400 font-bold">(' . $cnt . ' suara)</span>';
+                                    }
+                                }
+                            ?>
+                            <div class="relative group p-2.5 rounded-xl border flex flex-col justify-between transition-all <?= $r['has_input'] ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-200 hover:border-emerald-400/60' : 'bg-rose-950/30 border-rose-500/20 text-rose-300/80 hover:border-rose-400/50' ?>">
+                                <div>
+                                    <span class="text-xs font-bold truncate block" title="<?= htmlspecialchars($r['name']) ?>"><?= htmlspecialchars($r['name']) ?></span>
+                                    <span class="text-[11px] font-semibold text-amber-300/90 block mt-0.5"><?= htmlspecialchars($r['pj']) ?></span>
+                                </div>
+                                <div class="mt-2 flex items-center justify-between border-t border-white/5 pt-1.5">
+                                    <?php if ($r['has_input']): ?>
+                                        <span class="text-[10px] font-bold tracking-wider uppercase text-emerald-400 flex items-center gap-1">
+                                            <i class="bi bi-check-circle-fill text-xs"></i> Sudah
+                                        </span>
+                                        <span class="text-[10px] font-bold text-emerald-300/90 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20"><?= $r['vote_count'] ?> Suara</span>
+                                    <?php else: ?>
+                                        <span class="text-[10px] font-bold tracking-wider uppercase text-rose-400 flex items-center gap-1">
+                                            <i class="bi bi-x-circle-fill text-xs"></i> Belum
+                                        </span>
+                                        <span class="text-[10px] font-medium text-white/40">0 Suara</span>
+                                    <?php endif; ?>
+                                </div>
 
-                <div class="bg-gradient-to-br from-[#1b332e] to-[#122320] border border-cyan-500/30 rounded-2xl p-5 shadow-xl flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0">
-                        <i class="bi bi-people-fill text-cyan-400 text-2xl"></i>
-                    </div>
-                    <div>
-                        <span class="text-xs text-white/50 font-medium uppercase tracking-wider block">Jumlah Suara Masuk Kategori Rundayan</span>
-                        <div class="text-2xl font-black text-cyan-300 mt-0.5"><?= number_format($total_suara_rundayan ?? 0) ?> <span class="text-xs font-semibold text-white/60">Suara</span></div>
-                    </div>
+                                <!-- HOVER TOOLTIP / POPOVER -->
+                                <div class="fixed sm:absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:top-auto sm:bottom-full sm:left-1/2 sm:-translate-x-1/2 sm:translate-y-0 sm:mb-2 w-[85vw] max-w-xs sm:w-64 p-3 bg-gray-950/95 sm:bg-gray-900/95 border border-teal-500/50 rounded-xl shadow-2xl backdrop-blur-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
+                                    <div class="font-bold text-white text-xs border-b border-white/10 pb-1.5 mb-1.5 flex items-center justify-between gap-1.5">
+                                        <span class="truncate flex items-center gap-1.5"><i class="bi bi-people-fill text-amber-400"></i> <?= htmlspecialchars($r['name']) ?></span>
+                                        <span class="text-[10px] text-amber-300/80 font-normal shrink-0"><?= htmlspecialchars($r['pj']) ?></span>
+                                    </div>
+                                    <?php if (!empty($candList)): ?>
+                                        <div class="space-y-1 max-h-48 overflow-y-auto pr-1 text-[11px] text-white/90">
+                                            <?php foreach ($candList as $item): ?>
+                                                <div class="bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10 flex justify-between items-center gap-2">
+                                                    <?= $item ?>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="text-[11px] text-white/50 text-center py-1 font-normal">Belum ada suara tercatat</div>
+                                    <?php endif; ?>
+                                    <!-- Tooltip Arrow (Desktop only) -->
+                                    <div class="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 -mt-px border-8 border-transparent border-t-gray-900/95"></div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -362,24 +419,11 @@ if (!function_exists('render_custom_pagination')) {
                     </div>
                 </div>
 
-                <div class="relative min-h-[380px] flex flex-col items-center justify-center">
+                <div class="relative min-h-[380px] flex flex-col items-center justify-center w-full">
                     <div id="container_chart_3d" class="w-full h-[400px]" style="touch-action: manipulation;"></div>
                     
-                    <!-- CUSTOM HTML LEGEND PAGINATION CONTROLS -->
-                    <div id="legend_pagination_wrapper" class="hidden items-center justify-between w-full max-w-xs mt-2 px-3 py-1.5 bg-[#122422] border border-teal-700/40 rounded-xl text-xs shrink-0 gap-2 shadow-lg">
-                        <button id="btn_legend_prev" onclick="scrollLegendPage(false, -1)" class="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/60 active:scale-95 text-emerald-300 border border-emerald-500/30 rounded-lg font-bold transition-all disabled:pointer-events-none">
-                            <i class="bi bi-chevron-left text-xs"></i>
-                            <span>Prev</span>
-                        </button>
-                        <div class="flex items-center gap-1 text-xs font-bold text-white/90">
-                            <span>Hal</span>
-                            <span id="legend_page_info">1 / 1</span>
-                        </div>
-                        <button id="btn_legend_next" onclick="scrollLegendPage(false, 1)" class="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/60 active:scale-95 text-emerald-300 border border-emerald-500/30 rounded-lg font-bold transition-all disabled:pointer-events-none">
-                            <span>Next</span>
-                            <i class="bi bi-chevron-right text-xs"></i>
-                        </button>
-                    </div>
+                    <!-- CUSTOM GROUPED HTML LEGEND -->
+                    <div id="custom_grouped_legend_container" class="w-full mt-4 space-y-3 shrink-0"></div>
                 </div>
             </div>
             <?php endif; ?>
@@ -920,8 +964,48 @@ if (!function_exists('render_custom_pagination')) {
         const chartDataIndividu = <?= json_encode($chart_data_individu ?? []) ?>;
         const chartDataRundayan = <?= json_encode($chart_data_rundayan ?? []) ?>;
         const rundayanDetailMap = <?= json_encode($rundayan_detail_map ?? []) ?>;
+        const rundayanModalData = <?= json_encode($rundayan_modal_data ?? []) ?>;
 
         let highChartInstance = null;
+
+        function openRundayanModal(rundayanName) {
+            const modal   = document.getElementById('modal_rundayan_detail');
+            const titleEl = document.getElementById('modal_rundayan_title');
+            const bodyEl  = document.getElementById('modal_rundayan_body');
+
+            titleEl.textContent = rundayanName;
+
+            const detail = rundayanModalData[rundayanName];
+
+            if (!detail || !detail.candidates || detail.candidates.length === 0) {
+                bodyEl.innerHTML = '<div class="text-xs text-white/50 text-center py-6"><i class="bi bi-inbox text-3xl block mb-2 opacity-30"></i>Belum ada suara yang tercatat dari rundayan ini</div>';
+            } else {
+                const countMap = {};
+                detail.candidates.forEach(entry => {
+                    countMap[entry] = (countMap[entry] || 0) + 1;
+                });
+                const sorted = Object.entries(countMap).sort((a, b) => b[1] - a[1]);
+                let html = '<div class="text-xs text-white/60 mb-1 font-medium">Total: <strong class="text-cyan-300">' + detail.total_votes + ' suara</strong></div>';
+                sorted.forEach(([cand, count]) => {
+                    html += '<div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2">';
+                    html += '<span class="text-white font-semibold text-xs">' + cand + '</span>';
+                    html += '<span class="text-emerald-400 font-bold text-xs bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">' + count + ' suara</span>';
+                    html += '</div>';
+                });
+                bodyEl.innerHTML = html;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeRundayanModal() {
+            document.getElementById('modal_rundayan_detail').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeRundayanModal();
+        });
+
 
         function getDistinctColorsForData(dataSeries) {
             const count = dataSeries ? dataSeries.length : 0;
@@ -985,42 +1069,23 @@ if (!function_exists('render_custom_pagination')) {
                         size: window.innerWidth < 640 ? '90%' : '75%',
                         showInLegend: true,
                         dataLabels: {
-                            enabled: window.innerWidth >= 640,
-                            format: '<b>{point.name}</b><br>{point.y} suara ({point.percentage:.1f}%)',
+                            enabled: true,
+                            distance: 25,
+                            connectorWidth: 1.5,
+                            connectorColor: 'rgba(255, 255, 255, 0.4)',
+                            format: '{point.name}<br><span style="color:#34d399;font-weight:600;">{point.y} suara ({point.percentage:.1f}%)</span>',
                             style: {
                                 color: '#FFFFFF',
-                                textOutline: '2px #000000',
-                                fontFamily: 'Inter',
-                                fontSize: '12px',
-                                fontWeight: '700'
+                                textOutline: 'none',
+                                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                                fontSize: '11px',
+                                fontWeight: '400'
                             }
                         }
                     }
                 },
                 legend: {
-                    enabled: true,
-                    maxHeight: 120,
-                    navigation: {
-                        enabled: true,
-                        activeColor: '#10B981',
-                        inactiveColor: 'rgba(255,255,255,0.3)',
-                        arrowSize: 12,
-                        style: {
-                            color: '#FFFFFF',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                        }
-                    },
-                    labelFormat: window.innerWidth < 640 ? '<b>{name}</b> ({roles}): {y} suara ({percentage:.0f}%)' : '{name} <span style="color:#D4B571;font-weight:bold;">({roles})</span>',
-                    itemStyle: {
-                        color: '#FFFFFF',
-                        fontFamily: 'Inter',
-                        fontWeight: '600',
-                        fontSize: '12px'
-                    },
-                    itemHoverStyle: {
-                        color: '#D4B571'
-                    }
+                    enabled: false
                 },
                 tooltip: {
                     enabled: true,
@@ -1053,7 +1118,82 @@ if (!function_exists('render_custom_pagination')) {
                     data: dataSeries
                 }]
             });
-            setTimeout(() => { updateCustomLegendPaginationUI(false); }, 50);
+            renderCustomGroupedLegend(dataSeries, 'custom_grouped_legend_container');
+        }
+
+        function renderCustomGroupedLegend(dataSeries, containerId) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+
+            const grouped = {
+                'Ketua': [],
+                'Sekretaris': [],
+                'Bendahara': []
+            };
+
+            (dataSeries || []).forEach(item => {
+                if (!item || !item.name) return;
+
+                const nameUpper = item.name.trim().toUpperCase();
+                if (nameUpper === 'KETUA' || nameUpper === 'SEKRETARIS' || nameUpper === 'BENDAHARA') return;
+
+                // role_counts = { 'Ketua': 42, 'Bendahara': 2, ... } dari backend
+                const roleCounts = item.role_counts || {};
+                const roleStr    = (item.roles || '').toString();
+
+                // Kalau punya role_counts dari backend, pakai itu (akurat per jabatan)
+                const hasRoleCounts = Object.keys(roleCounts).length > 0;
+
+                const addToGroup = (roleKey, votes) => {
+                    grouped[roleKey].push({ name: item.name, votes: votes });
+                };
+
+                if (hasRoleCounts) {
+                    Object.entries(roleCounts).forEach(([role, count]) => {
+                        const r = role.trim();
+                        if (grouped[r] !== undefined) {
+                            addToGroup(r, count);
+                        }
+                    });
+                } else {
+                    // Fallback: pakai total y, kelompokkan dari roleStr
+                    let matched = false;
+                    if (roleStr.indexOf('Ketua') !== -1 || roleStr.indexOf('KETUA') !== -1) {
+                        addToGroup('Ketua', item.y || 0); matched = true;
+                    }
+                    if (roleStr.indexOf('Sekretaris') !== -1 || roleStr.indexOf('SEKRETARIS') !== -1) {
+                        addToGroup('Sekretaris', item.y || 0); matched = true;
+                    }
+                    if (roleStr.indexOf('Bendahara') !== -1 || roleStr.indexOf('BENDAHARA') !== -1) {
+                        addToGroup('Bendahara', item.y || 0); matched = true;
+                    }
+                    if (!matched) addToGroup('Ketua', item.y || 0);
+                }
+            });
+
+            const rolesOrder = ['Ketua', 'Sekretaris', 'Bendahara'];
+            let html = '';
+
+            rolesOrder.forEach(roleKey => {
+                const list = grouped[roleKey];
+                if (list && list.length > 0) {
+                    // Sort by votes descending
+                    list.sort((a, b) => b.votes - a.votes);
+
+                    html += `<div class="bg-black/30 border border-teal-700/30 rounded-xl p-3.5 space-y-2">`;
+                    html += `<div class="font-bold text-amber-400 text-sm flex items-center gap-1.5 border-b border-white/10 pb-1.5">`;
+                    html += `<i class="bi bi-person-badge-fill"></i> ${roleKey} :</div>`;
+                    html += `<div class="text-xs text-white/90 leading-relaxed font-medium">`;
+
+                    html += list.map(entry =>
+                        `<span class="inline-block bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1 rounded-lg mr-1.5 mb-1.5 transition-all"><strong class="text-white">${entry.name}</strong> <span class="text-emerald-400 font-bold">(${entry.votes} suara)</span></span>`
+                    ).join('');
+
+                    html += `</div></div>`;
+                }
+            });
+
+            el.innerHTML = html || '<div class="text-xs text-white/50 text-center py-2">Belum ada data kandidat</div>';
         }
 
         function switchChart(type) {
@@ -1160,8 +1300,8 @@ if (!function_exists('render_custom_pagination')) {
                         showInLegend: true,
                         dataLabels: {
                             enabled: !isMobile,
-                            format: '<b>{point.name}</b><br>{point.y} suara ({point.percentage:.1f}%)',
-                            style: { color: '#FFFFFF', textOutline: '2px #000000', fontFamily: 'Inter', fontSize: '13px', fontWeight: '700' }
+                            format: '{point.name}<br>{point.y} suara ({point.percentage:.1f}%)',
+                            style: { color: '#FFFFFF', textOutline: 'none', fontFamily: 'sans-serif', fontSize: '11px', fontWeight: '400' }
                         }
                     }
                 },
@@ -1284,18 +1424,44 @@ if (!function_exists('render_custom_pagination')) {
                 }
             });
 
-            combinedNominators = [...new Set(combinedNominators)];
-            combinedCandidates = [...new Set(combinedCandidates)];
-            const totalVotes = combinedNominators.length;
+            // Group candidates by Role (Ketua, Bendahara, Sekretaris)
+            let ketuaList = [], bendaharaList = [], sekretarisList = [];
+            combinedCandidates.forEach(candStr => {
+                if (candStr.includes('(Ketua)')) {
+                    ketuaList.push(candStr.replace(/\s*\(Ketua\)/i, ''));
+                } else if (candStr.includes('(Bendahara)')) {
+                    bendaharaList.push(candStr.replace(/\s*\(Bendahara\)/i, ''));
+                } else if (candStr.includes('(Sekretaris)')) {
+                    sekretarisList.push(candStr.replace(/\s*\(Sekretaris\)/i, ''));
+                } else {
+                    ketuaList.push(candStr);
+                }
+            });
+
+            ketuaList = [...new Set(ketuaList)];
+            bendaharaList = [...new Set(bendaharaList)];
+            sekretarisList = [...new Set(sekretarisList)];
+
+            let htmlCandidates = '';
+            if (ketuaList.length > 0) {
+                htmlCandidates += `<div style="margin-bottom: 6px;"><strong style="color: #f59e0b;">Ketua:</strong><br><span style="color: #e2e8f0;">${ketuaList.join(', ')}</span></div>`;
+            }
+            if (bendaharaList.length > 0) {
+                htmlCandidates += `<div style="margin-bottom: 6px;"><strong style="color: #10b981;">Bendahara:</strong><br><span style="color: #e2e8f0;">${bendaharaList.join(', ')}</span></div>`;
+            }
+            if (sekretarisList.length > 0) {
+                htmlCandidates += `<div><strong style="color: #38bdf8;">Sekretaris:</strong><br><span style="color: #e2e8f0;">${sekretarisList.join(', ')}</span></div>`;
+            }
+            if (!htmlCandidates) htmlCandidates = '-';
 
             if (totalVotes > 0 || combinedCandidates.length > 0) {
                 document.getElementById('modal_rundayan_votes').innerText = `${totalVotes} Suara`;
                 document.getElementById('modal_rundayan_nominators').innerText = combinedNominators.join(', ') || '-';
-                document.getElementById('modal_rundayan_candidates').innerText = combinedCandidates.join(', ') || '-';
+                document.getElementById('modal_rundayan_candidates').innerHTML = htmlCandidates;
             } else {
                 document.getElementById('modal_rundayan_votes').innerText = `0 Suara`;
                 document.getElementById('modal_rundayan_nominators').innerText = `-`;
-                document.getElementById('modal_rundayan_candidates').innerText = `-`;
+                document.getElementById('modal_rundayan_candidates').innerHTML = `-`;
             }
 
             modal.classList.remove('hidden');
