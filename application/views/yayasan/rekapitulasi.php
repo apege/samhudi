@@ -260,6 +260,57 @@ if (!function_exists('render_cards_pagination')) {
         </div>
         <?php endif; ?>
 
+        <!-- SUMMARY STAT CARDS (TOTAL SUARA MASUK) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gradient-to-br from-[#1b302c] to-[#11201d] border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl shrink-0">
+                    <i class="bi bi-inbox-fill"></i>
+                </div>
+                <div>
+                    <span class="text-[11px] font-bold tracking-wider text-amber-200/70 uppercase block">TOTAL SUARA MASUK</span>
+                    <div class="text-2xl font-black text-amber-400 flex items-baseline gap-1.5">
+                        <?= number_format($total_suara_masuk ?? 0) ?>
+                        <span class="text-xs font-semibold text-white/50">Suara</span>
+                    </div>
+                    <span class="text-[10px] text-amber-300/80 font-medium block mt-0.5">
+                        <i class="bi bi-people-fill text-xs mr-0.5"></i> Dari <strong class="text-amber-200"><?= number_format($total_pemilih_keseluruhan ?? 0) ?></strong> Pemilih (Orang)
+                    </span>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-[#1b302c] to-[#11201d] border border-emerald-500/30 rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl shrink-0">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div>
+                    <span class="text-[11px] font-bold tracking-wider text-emerald-200/70 uppercase block">JUMLAH SUARA MASUK KATEGORI INDIVIDU</span>
+                    <div class="text-2xl font-black text-emerald-400 flex items-baseline gap-1.5">
+                        <?= number_format($total_suara_individu ?? 0) ?>
+                        <span class="text-xs font-semibold text-white/50">Suara</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-300/80 font-medium block mt-0.5">
+                        <i class="bi bi-people-fill text-xs mr-0.5"></i> Dari <strong class="text-emerald-200"><?= number_format($total_pemilih_individu ?? 0) ?></strong> Pemilih (Orang)
+                    </span>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-[#1b302c] to-[#11201d] border border-cyan-500/30 rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl shrink-0">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <span class="text-[11px] font-bold tracking-wider text-cyan-200/70 uppercase block">JUMLAH SUARA MASUK KATEGORI RUNDAYAN</span>
+                    <div class="text-2xl font-black text-cyan-400 flex items-baseline gap-1.5">
+                        <?= number_format($total_suara_rundayan ?? 0) ?>
+                        <span class="text-xs font-semibold text-white/50">Suara</span>
+                    </div>
+                    <span class="text-[10px] text-cyan-300/80 font-medium block mt-0.5">
+                        <i class="bi bi-people-fill text-xs mr-0.5"></i> Dari <strong class="text-cyan-200"><?= number_format($total_pemilih_rundayan ?? 0) ?></strong> Pemilih (Orang)
+                    </span>
+                </div>
+            </div>
+        </div>
+
         <!-- RINGKASAN STATUS INPUT 14 RUNDAYAN -->
         <?php 
             $count_submitted = count(array_filter($rundayan_input_status ?? [], function($r) { return $r['has_input']; }));
@@ -343,6 +394,36 @@ if (!function_exists('render_cards_pagination')) {
                                 <?php endif; ?>
                                 <!-- Tooltip Arrow (Desktop only) -->
                                 <div class="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 -mt-px border-8 border-transparent border-t-gray-900/95"></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- RINCIAN JUMLAH PEMILIH PER-RUNDAYAN (SEKALI LIHAT AKURAT & RAPI) -->
+        <div class="bg-gradient-to-br from-[#162a27] to-[#0f1e1c] border border-teal-700/40 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-teal-700/30 pb-3">
+                <div>
+                    <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+                        <i class="bi bi-people-fill text-emerald-400 text-lg"></i> Rincian Jumlah Pemilih (Orang) Per-Rundayan
+                    </h4>
+                    <p class="text-xs text-white/50">Daftar jumlah orang (pemilih unik) yang sudah berpartisipasi mengisi suara dari masing-masing rundayan.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                <?php if (!empty($rundayan_input_status)): ?>
+                    <?php foreach ($rundayan_input_status as $r): ?>
+                        <div class="p-3 rounded-2xl border bg-black/20 border-white/10 flex flex-col justify-between space-y-2">
+                            <div>
+                                <span class="text-xs font-bold text-white truncate block" title="<?= htmlspecialchars($r['name']) ?>"><?= htmlspecialchars($r['name']) ?></span>
+                            </div>
+                            <div class="border-t border-white/10 pt-1.5 flex items-center justify-between">
+                                <span class="text-[10px] text-white/60 font-semibold">Pemilih:</span>
+                                <span class="text-xs font-black <?= $r['voter_count'] > 0 ? 'text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20' : 'text-white/40' ?>">
+                                    <?= $r['voter_count'] ?> Orang
+                                </span>
                             </div>
                         </div>
                     <?php endforeach; ?>

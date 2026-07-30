@@ -122,6 +122,12 @@ class Rundayan extends CI_Controller {
 
     public function nominate()
     {
+        // POLLING DITUTUP SEMENTARA
+        $this->session->set_flashdata('error', 'Mohon maaf, polling pencalonan Ketua Yayasan sudah resmi ditutup.');
+        redirect('rundayan');
+        return;
+
+        /* KODE ASLI POLLING DENGAN VALIDASI (DINONAKTIFKAN SEMENTARA):
         $this->form_validation->set_rules('nominator_name', 'Nama Pencalon', 'required|trim|max_length[255]');
         $this->form_validation->set_rules('ancestor_name', 'Undayan / Buyut', 'required|trim|max_length[255]');
         $this->form_validation->set_rules('candidate_name_1', 'Nama yang Dicalonkan 1', 'required|trim|max_length[255]');
@@ -172,12 +178,12 @@ class Rundayan extends CI_Controller {
 
                 $this->db->where('LOWER(nominator_name) =', strtolower($nominator));
                 $this->db->where('LOWER(candidate_name) =', strtolower($cand));
+                $this->db->where('type', 'rundayan');
                 $existing = $this->db->get('yayasan_candidates')->row_array();
 
                 if ($existing) {
-                    // If description (role) and ancestor are already identical, block submission
                     if ($existing['description'] === $roles_map[$i] && $existing['ancestor_name'] === $ancestor) {
-                        $failed_names[] = $cand;
+                        $failed_names[] = $cand . ' (sudah dicalonkan sebagai ' . $roles_map[$i] . ')';
                         continue;
                     }
                     
@@ -397,5 +403,6 @@ class Rundayan extends CI_Controller {
         $this->load->view('templates/header');
         $this->load->view('yayasan/bukti', $data);
         $this->load->view('templates/footer');
+        */
     }
 }

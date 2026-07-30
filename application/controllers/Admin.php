@@ -1759,13 +1759,14 @@ class Admin extends CI_Controller
             'Kamil Samhudi'                  => 'Enong'
         ];
 
-        // Track perolehan inputan KHUSUS KATEGORI RUNDAYAN (bukan campuran individu)
-        $rundayan_vote_counts = [];
+        // Track perolehan inputan & jumlah pemilih unik per rundayan
+        $rundayan_vote_counts  = [];
+        $rundayan_voter_names  = [];
         foreach ($raw_approved as $c) {
-            // KHUSUS KATEGORI RUNDAYAN!
-            if (($c['type'] ?? 'individu') !== 'rundayan') continue;
+            $nom       = trim($c['nominator_name'] ?? '');
+            $candType  = $c['type'] ?? 'individu';
+            $anc_spl   = array_map('trim', explode(',', $c['ancestor_name']));
 
-            $anc_spl = array_map('trim', explode(',', $c['ancestor_name']));
             foreach ($anc_spl as $single_anc) {
                 if (empty($single_anc)) continue;
                 foreach ($master_14_rundayan as $m_anc => $pj_name) {
@@ -1773,8 +1774,16 @@ class Admin extends CI_Controller
                         $key_low = strtolower($m_anc);
                         if (!isset($rundayan_vote_counts[$key_low])) {
                             $rundayan_vote_counts[$key_low] = 0;
+                            $rundayan_voter_names[$key_low] = [];
                         }
-                        $rundayan_vote_counts[$key_low] += 1;
+                        // Vote count khusus form rundayan
+                        if ($candType === 'rundayan') {
+                            $rundayan_vote_counts[$key_low] += 1;
+                        }
+                        // Voter count dari SEMUA penombok asal rundayan tersebut
+                        if (!empty($nom)) {
+                            $rundayan_voter_names[$key_low][] = strtolower($nom);
+                        }
                     }
                 }
             }
@@ -1782,14 +1791,16 @@ class Admin extends CI_Controller
 
         $rundayan_input_status = [];
         foreach ($master_14_rundayan as $m_anc => $pj_name) {
-            $key_low = strtolower($m_anc);
-            $vote_cnt = $rundayan_vote_counts[$key_low] ?? 0;
+            $key_low   = strtolower($m_anc);
+            $vote_cnt  = $rundayan_vote_counts[$key_low] ?? 0;
+            $voter_cnt = isset($rundayan_voter_names[$key_low]) ? count(array_unique($rundayan_voter_names[$key_low])) : 0;
             $has_input = $vote_cnt > 0;
             $rundayan_input_status[] = [
-                'name'      => $m_anc,
-                'pj'        => $pj_name,
-                'has_input' => $has_input,
-                'vote_count'=> $vote_cnt
+                'name'       => $m_anc,
+                'pj'         => $pj_name,
+                'has_input'  => $has_input,
+                'vote_count' => $vote_cnt,
+                'voter_count'=> $voter_cnt
             ];
         }
 
@@ -1864,6 +1875,9 @@ class Admin extends CI_Controller
             'total_suara_masuk'           => count($raw_approved),
             'total_suara_individu'        => array_sum(array_column($chart_data_individu, 'y')),
             'total_suara_rundayan'        => array_sum(array_column($chart_data_rundayan, 'y')),
+            'total_pemilih_individu'      => count(array_unique(array_map('strtolower', array_map('trim', array_column(array_filter($raw_approved, function($c){ return ($c['type'] ?? 'individu') !== 'rundayan'; }), 'nominator_name'))))),
+            'total_pemilih_rundayan'      => count(array_unique(array_map('strtolower', array_map('trim', array_column(array_filter($raw_approved, function($c){ return ($c['type'] ?? 'individu') === 'rundayan'; }), 'nominator_name'))))),
+            'total_pemilih_keseluruhan'   => count(array_unique(array_map('strtolower', array_map('trim', array_column($raw_approved, 'nominator_name'))))),
             'rundayan_input_status'       => $rundayan_input_status,
             'rundayan_modal_data'         => $rundayan_modal_data
         ];

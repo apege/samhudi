@@ -140,6 +140,12 @@ class Anggota extends CI_Controller {
 
     public function nominate()
     {
+        // POLLING DITUTUP SEMENTARA
+        $this->session->set_flashdata('error', 'Mohon maaf, polling pencalonan Ketua Yayasan sudah resmi ditutup.');
+        redirect('anggota');
+        return;
+
+        /* KODE ASLI POLLING DENGAN VALIDASI (DINONAKTIFKAN SEMENTARA):
         $this->form_validation->set_rules('nominator_name', 'Nama Pencalon', 'required|trim|max_length[255]');
         $this->form_validation->set_rules('ancestor_name', 'Undayan / Buyut', 'required|trim|max_length[255]');
         $this->form_validation->set_rules('candidate_name_1', 'Nama yang Dicalonkan 1', 'required|trim|max_length[255]');
@@ -446,5 +452,6 @@ class Anggota extends CI_Controller {
         $this->load->view('templates/header');
         $this->load->view('yayasan/bukti', $data);
         $this->load->view('templates/footer');
+        */
     }
 }
