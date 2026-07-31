@@ -35,11 +35,12 @@ class Anggota extends CI_Controller {
         // Group candidates by name to handle unique nominee constraint
         $grouped = [];
         foreach ($raw_candidates as $c) {
-            $key = strtolower(trim($c['candidate_name']));
+            $displayName = normalize_candidate_name($c['candidate_name']);
+            $key = strtolower(trim($displayName));
             if (!isset($grouped[$key])) {
                 $grouped[$key] = [
                     'id'             => $c['id'],
-                    'candidate_name' => $c['candidate_name'],
+                    'candidate_name' => $displayName,
                     'ancestor_name'  => $c['ancestor_name'], // fallback primary ancestor
                     'type'           => 'individu',
                     'nominators'     => [trim($c['nominator_name'])],
@@ -133,13 +134,18 @@ class Anggota extends CI_Controller {
         $data['all_names'] = $unique_names;
 
         $this->load->view('templates/header');
-        $this->load->view('partials/navbar');
         $this->load->view('yayasan/index', $data);
         $this->load->view('templates/footer');
     }
 
     public function nominate()
     {
+        // POLLING DITUTUP SEMENTARA
+        $this->session->set_flashdata('error', 'Mohon maaf, polling pencalonan Ketua Yayasan sudah resmi ditutup.');
+        redirect('anggota');
+        return;
+
+        /* KODE ASLI POLLING DENGAN VALIDASI (DINONAKTIFKAN SEMENTARA):
         $this->form_validation->set_rules('nominator_name', 'Nama Pencalon', 'required|trim|max_length[255]');
         $this->form_validation->set_rules('ancestor_name', 'Undayan / Buyut', 'required|trim|max_length[255]');
         $this->form_validation->set_rules('candidate_name_1', 'Nama yang Dicalonkan 1', 'required|trim|max_length[255]');
@@ -408,7 +414,6 @@ class Anggota extends CI_Controller {
         $data['nominated_by_this'] = $this->db->get('yayasan_candidates')->result_array();
 
         $this->load->view('templates/header');
-        $this->load->view('partials/navbar');
         $this->load->view('yayasan/detail', $data);
         $this->load->view('templates/footer');
     }
@@ -445,8 +450,8 @@ class Anggota extends CI_Controller {
         $data['receipt_url'] = current_url() . '?' . $_SERVER['QUERY_STRING'];
 
         $this->load->view('templates/header');
-        $this->load->view('partials/navbar');
         $this->load->view('yayasan/bukti', $data);
         $this->load->view('templates/footer');
+        */
     }
 }

@@ -117,7 +117,31 @@ if (!function_exists('render_tree_node')) {
             </div>
         <?php endif; ?>
 
-        <!-- Form Card Container -->
+        <!-- POLLING DITUTUP BANNER CONTAINER -->
+        <div class="bg-gradient-to-b from-[#1b3638] to-[#122829] border border-emerald-500/30 rounded-3xl w-full p-8 shadow-2xl backdrop-blur-md text-center space-y-5">
+            <div class="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 text-3xl flex items-center justify-center mx-auto shadow-inner">
+                <i class="bi bi-lock-fill"></i>
+            </div>
+            
+            <div class="space-y-2">
+                <h3 class="text-xl font-display font-bold text-white tracking-wide">
+                    Polling Pencalonan Ditutup
+                </h3>
+                <p class="text-xs sm:text-sm text-emerald-100/80 leading-relaxed max-w-xs mx-auto">
+                    Polling untuk pencalonan Ketua Yayasan Keluarga Besar H.M Samhudi (Rundayan & Individu) <strong class="text-amber-300">sudah resmi ditutup</strong>.
+                </p>
+            </div>
+
+            <div class="pt-2">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/60 font-semibold">
+                    <i class="bi bi-check-circle-fill text-emerald-400"></i> Terima kasih atas partisipasi seluruh keluarga
+                </span>
+            </div>
+        </div>
+
+        <?php /* ==========================================
+              KODE FORM POLLING DINONAKTIFKAN SEMENTARA
+              ==========================================
         <div class="bg-gradient-to-b from-[#1b3638] to-[#122829] border border-white/15 rounded-3xl w-full shadow-2xl overflow-hidden backdrop-blur-md">
             <!-- Step Indicator -->
             <div class="px-6 pt-6 flex items-center justify-center gap-2 shrink-0 border-b border-white/5 pb-5">
@@ -164,12 +188,6 @@ if (!function_exists('render_tree_node')) {
                             <option value="Kartini Samhudi">KARTINI SAMHUDI</option>
                             <option value="Enden Kardinah">ENDEN KARDINAH</option>
                             <option value="Kamil Samhudi">KAMIL SAMHUDI</option>
-                            <!-- <option value="SUPRAPTI SAMHUDI (TUTI)">SUPRAPTI SAMHUDI (TUTI)</option>
-                            <option value="KARTINI SAMHUDI (TINTIN)">KARTINI SAMHUDI (TINTIN)</option>
-                            <option value="LUKMAN SAMHUDI">LUKMAN SAMHUDI</option>
-                            <option value="KAMIL SAMHUDI">KAMIL SAMHUDI</option>
-                            <option value="KARDINAH SAMHUDI">KARDINAH SAMHUDI</option> -->
-                           
                         </select>
                     </div>
                 </div>
@@ -223,6 +241,7 @@ if (!function_exists('render_tree_node')) {
                 </div>
             </form>
         </div>
+        */ ?>
     </div>
 </main>
 

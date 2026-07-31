@@ -25,9 +25,8 @@ class Yayasan extends CI_Controller {
         $rundayan_detail_map = [];
 
         foreach ($raw_approved as $c) {
-            $key = strtolower(trim($c['candidate_name']));
-            $nom = trim($c['nominator_name']);
-            $anc = trim($c['ancestor_name']);
+            $displayName = normalize_candidate_name($c['candidate_name']);
+            $candType    = $c['type'] ?? 'individu';
             
             // Clean role resolution
             $r_raw = trim($c['description']);
@@ -39,17 +38,22 @@ class Yayasan extends CI_Controller {
                 $role = 'Ketua';
             }
 
+            $nom  = trim($c['nominator_name']);
+            $anc  = trim($c['ancestor_name']);
+            $key  = $candType . '_' . strtolower(trim($displayName));
+
             if (!isset($grouped[$key])) {
                 $grouped[$key] = [
                     'id'             => $c['id'],
-                    'candidate_name' => $c['candidate_name'],
+                    'candidate_name' => $displayName,
                     'ancestor_name'  => $c['ancestor_name'],
-                    'type'           => $c['type'] ?? 'individu',
+                    'type'           => $candType,
                     'nominators'     => [$nom],
                     'ancestors'      => [$anc],
                     'votes_count'    => 1,
                     'ancestor_breakdown' => [$anc => 1],
                     'roles'          => [$role],
+                    'role_counts'    => [$role => 1],
                     'created_at'     => $c['created_at']
                 ];
             } else {
@@ -63,26 +67,37 @@ class Yayasan extends CI_Controller {
                     $grouped[$key]['ancestor_breakdown'][$anc] += 1;
                 }
                 $grouped[$key]['roles'][] = $role;
+                if (!isset($grouped[$key]['role_counts'][$role])) {
+                    $grouped[$key]['role_counts'][$role] = 1;
+                } else {
+                    $grouped[$key]['role_counts'][$role] += 1;
+                }
             }
 
             // Map detail per rundayan for Hover feature
-            if (!isset($rundayan_detail_map[$anc])) {
-                $rundayan_detail_map[$anc] = [
-                    'ancestor_name' => $anc,
-                    'nominators'    => [],
-                    'candidates'    => [],
-                    'total_votes'   => 0
-                ];
+            $anc_list = array_map('trim', explode(',', $anc));
+            foreach ($anc_list as $single_anc) {
+                if (empty($single_anc)) continue;
+                if (!isset($rundayan_detail_map[$single_anc])) {
+                    $rundayan_detail_map[$single_anc] = [
+                        'ancestor_name' => $single_anc,
+                        'nominators'    => [],
+                        'candidates'    => [],
+                        'total_votes'   => 0
+                    ];
+                }
+                $candRole  = trim($c['description']);
+                $candEntry = $displayName . " (" . $candRole . ")";
+                $rundayan_detail_map[$single_anc]['nominators'][] = $nom;
+                $rundayan_detail_map[$single_anc]['candidates'][] = $candEntry;
             }
-            $rundayan_detail_map[$anc]['nominators'][] = $nom;
-            $rundayan_detail_map[$anc]['candidates'][] = $c['candidate_name'];
-            $rundayan_detail_map[$anc]['total_votes'] += 1;
         }
 
         // Clean & unique detail map per rundayan
         foreach ($rundayan_detail_map as $anc_key => $data) {
             $rundayan_detail_map[$anc_key]['nominators'] = array_values(array_unique($data['nominators']));
             $rundayan_detail_map[$anc_key]['candidates'] = array_values(array_unique($data['candidates']));
+            $rundayan_detail_map[$anc_key]['total_votes'] = count($rundayan_detail_map[$anc_key]['nominators']);
         }
 
         $individu_candidates = [];
@@ -220,28 +235,67 @@ class Yayasan extends CI_Controller {
             });
         }
 
-        // Data for 3D Pie Chart
-        $chart_data_individu = [];
+        // Data for 3D Pie Chart - Single slice per candidate (Name-only) with role_counts for custom legend
+        $chart_data_individu_map = [];
         foreach ($individu_candidates as $c) {
-            $chart_data_individu[] = [
-                'name'       => $c['candidate_name'],
-                'y'          => (int) $c['votes_count'],
-                'nominators' => $c['nominator_name'],
-                'ancestors'  => $c['ancestor_name'],
-                'breakdown'  => $c['breakdown_text']
-            ];
+            $normName = normalize_candidate_name($c['candidate_name']);
+            $nameKey  = strtolower(trim($normName));
+            if (!isset($chart_data_individu_map[$nameKey])) {
+                $chart_data_individu_map[$nameKey] = [
+                    'name'         => $normName,
+                    'y'            => (int) $c['votes_count'],
+                    'nominators'   => [$c['nominator_name']],
+                    'ancestors'    => [$c['ancestor_name']],
+                    'roles'        => $c['roles_text'],
+                    'role_counts'  => $c['role_counts'] ?? [],
+                    'breakdown'    => [$c['breakdown_text']]
+                ];
+            } else {
+                $chart_data_individu_map[$nameKey]['y'] += (int) $c['votes_count'];
+                $chart_data_individu_map[$nameKey]['nominators'][] = $c['nominator_name'];
+                $chart_data_individu_map[$nameKey]['ancestors'][]  = $c['ancestor_name'];
+                $chart_data_individu_map[$nameKey]['breakdown'][]  = $c['breakdown_text'];
+            }
+        }
+        $chart_data_individu = [];
+        foreach ($chart_data_individu_map as $item) {
+            $item['nominators'] = implode(', ', array_unique(explode(', ', implode(', ', $item['nominators']))));
+            $item['ancestors']  = implode(', ', array_unique(explode(', ', implode(', ', $item['ancestors']))));
+            $item['breakdown']  = implode(', ', array_unique(explode(', ', implode(', ', $item['breakdown']))));
+            $chart_data_individu[] = $item;
         }
 
-        $chart_data_rundayan = [];
+        $chart_data_rundayan_map = [];
         foreach ($rundayan_candidates as $c) {
-            $chart_data_rundayan[] = [
-                'name'       => $c['candidate_name'],
-                'y'          => (int) $c['votes_count'],
-                'nominators' => $c['nominator_name'],
-                'ancestors'  => $c['ancestor_name'],
-                'breakdown'  => $c['breakdown_text']
-            ];
+            $normName = normalize_candidate_name($c['candidate_name']);
+            $nameKey  = strtolower(trim($normName));
+            if (!isset($chart_data_rundayan_map[$nameKey])) {
+                $chart_data_rundayan_map[$nameKey] = [
+                    'name'         => $normName,
+                    'y'            => (int) $c['votes_count'],
+                    'nominators'   => [$c['nominator_name']],
+                    'ancestors'    => [$c['ancestor_name']],
+                    'roles'        => $c['roles_text'],
+                    'role_counts'  => $c['role_counts'] ?? [],
+                    'breakdown'    => [$c['breakdown_text']]
+                ];
+            } else {
+                $chart_data_rundayan_map[$nameKey]['y'] += (int) $c['votes_count'];
+                $chart_data_rundayan_map[$nameKey]['nominators'][] = $c['nominator_name'];
+                $chart_data_rundayan_map[$nameKey]['ancestors'][]  = $c['ancestor_name'];
+                $chart_data_rundayan_map[$nameKey]['breakdown'][]  = $c['breakdown_text'];
+            }
         }
+        $chart_data_rundayan = [];
+        foreach ($chart_data_rundayan_map as $item) {
+            $item['nominators'] = implode(', ', array_unique(explode(', ', implode(', ', $item['nominators']))));
+            $item['ancestors']  = implode(', ', array_unique(explode(', ', implode(', ', $item['ancestors']))));
+            $item['breakdown']  = implode(', ', array_unique(explode(', ', implode(', ', $item['breakdown']))));
+            $chart_data_rundayan[] = $item;
+        }
+
+        usort($chart_data_individu, function($a, $b) { return $b['y'] <=> $a['y']; });
+        usort($chart_data_rundayan, function($a, $b) { return $b['y'] <=> $a['y']; });
 
         // Fetch all distinct candidate names, nominator names, and ancestor names for autocomplete suggestions
         $noms = $this->db->select('nominator_name as name')->get('yayasan_candidates')->result_array();
@@ -255,6 +309,105 @@ class Yayasan extends CI_Controller {
             }
         }
         $all_names = array_values(array_unique($all_names_list));
+
+        // Master 14 Rundayan Samhudi beserta Nama PJ / Koordinator Penginput
+        $master_14_rundayan = [
+            'HIDAYAT SAMHUDI'                => 'Emir',
+            'HM. SALEH SAMHUDI'              => 'C Nia',
+            "Hj SA'ADIAH SAMHUDI"            => 'C Ina',
+            'H. AMIDIN SAMHUDI'              => 'Caca',
+            'BUSTOMI (TOMI) SAMHUDI'        => 'Gina',
+            'ABDUL FATAH (UTUN) SAMHUDI'     => 'Herry',
+            'Hj DJUMENAH (CUCU) SAMHUDI'     => 'Yenny',
+            'Hj NANI SOMARNI (ENAN) SAMHUDI' => 'Febby',
+            'Hj MARIAM (MARI) SAMHUDI'       => 'Tania',
+            'H. ABDUL HAMID (ACEP) SAMHUDI'  => 'Hilda',
+            'Tuti Suprapti Samhudi'          => 'Ike',
+            'Kartini Samhudi'                => 'Tedi',
+            'Enden Kardinah'                 => 'Deni',
+            'Kamil Samhudi'                  => 'Enong'
+        ];
+
+        // Track perolehan inputan & jumlah pemilih unik per rundayan
+        $rundayan_vote_counts  = [];
+        $rundayan_voter_names  = [];
+        foreach ($raw_approved as $c) {
+            $nom       = trim($c['nominator_name'] ?? '');
+            $candType  = $c['type'] ?? 'individu';
+            $anc_spl   = array_map('trim', explode(',', $c['ancestor_name']));
+
+            foreach ($anc_spl as $single_anc) {
+                if (empty($single_anc)) continue;
+                foreach ($master_14_rundayan as $m_anc => $pj_name) {
+                    if (stripos($single_anc, $m_anc) !== false || stripos($m_anc, $single_anc) !== false) {
+                        $key_low = strtolower($m_anc);
+                        if (!isset($rundayan_vote_counts[$key_low])) {
+                            $rundayan_vote_counts[$key_low] = 0;
+                            $rundayan_voter_names[$key_low] = [];
+                        }
+                        // Vote count khusus form rundayan
+                        if ($candType === 'rundayan') {
+                            $rundayan_vote_counts[$key_low] += 1;
+                        }
+                        // Voter count dari SEMUA penombok asal rundayan tersebut
+                        if (!empty($nom)) {
+                            $rundayan_voter_names[$key_low][] = strtolower($nom);
+                        }
+                    }
+                }
+            }
+        }
+
+        $rundayan_input_status = [];
+        foreach ($master_14_rundayan as $m_anc => $pj_name) {
+            $key_low   = strtolower($m_anc);
+            $vote_cnt  = $rundayan_vote_counts[$key_low] ?? 0;
+            $voter_cnt = isset($rundayan_voter_names[$key_low]) ? count(array_unique($rundayan_voter_names[$key_low])) : 0;
+            $has_input = $vote_cnt > 0;
+            $rundayan_input_status[] = [
+                'name'       => $m_anc,
+                'pj'         => $pj_name,
+                'has_input'  => $has_input,
+                'vote_count' => $vote_cnt,
+                'voter_count'=> $voter_cnt
+            ];
+        }
+
+        // Build modal data keyed EXACTLY by master rundayan names (reliable JS lookup)
+        $rundayan_modal_data = [];
+        foreach ($master_14_rundayan as $m_anc => $pj_name) {
+            $rundayan_modal_data[$m_anc] = ['candidates' => [], 'nominators' => [], 'total_votes' => 0];
+        }
+        foreach ($raw_approved as $c) {
+            // KHUSUS KATEGORI RUNDAYAN SAJA!
+            if (($c['type'] ?? 'individu') !== 'rundayan') continue;
+
+            $anc_spl     = array_map('trim', explode(',', $c['ancestor_name'] ?? ''));
+            $candRole    = trim($c['description'] ?? '');
+            $cName       = trim($c['candidate_name'] ?? '');
+            // Normalize display name sama seperti di grouped loop
+            $parts = preg_split('/\s+/', $cName);
+            $initials = [];
+            foreach (array_slice($parts, 0, -1) as $p) { $initials[] = strtoupper(substr($p,0,1)); }
+            $last = end($parts);
+            $dispName = empty($initials) ? $last : implode('.', $initials) . '. ' . $last;
+            $candEntry = $dispName . ' (' . $candRole . ')';
+            $nom       = trim($c['nominator_name'] ?? '');
+
+            foreach ($anc_spl as $single_anc) {
+                if (empty($single_anc)) continue;
+                foreach ($master_14_rundayan as $m_anc => $pj_name) {
+                    if (stripos($single_anc, $m_anc) !== false || stripos($m_anc, $single_anc) !== false) {
+                        $rundayan_modal_data[$m_anc]['candidates'][] = $candEntry;
+                        $rundayan_modal_data[$m_anc]['nominators'][] = $nom;
+                    }
+                }
+            }
+        }
+        foreach ($rundayan_modal_data as $k => $v) {
+            // Keep full candidate list so votes count matches vote_count
+            $rundayan_modal_data[$k]['total_votes'] = count($v['candidates']);
+        }
 
         $data = [
             'page_title'            => 'Rekapitulasi Pemilihan Ketua Yayasan - Dewan Pembina',
@@ -292,6 +445,16 @@ class Yayasan extends CI_Controller {
             'total_tbl_rundayan'     => $total_tbl_rundayan,
             'limit_tbl_rundayan'     => $limit_tbl_rundayan,
             'page_tbl_rundayan'      => $page_tbl_rundayan,
+
+            // Ringkasan Suara Masuk & Status 14 Rundayan
+            'total_suara_masuk'           => count($raw_approved),
+            'total_suara_individu'        => array_sum(array_column($chart_data_individu, 'y')),
+            'total_suara_rundayan'        => array_sum(array_column($chart_data_rundayan, 'y')),
+            'total_pemilih_individu'      => count(array_unique(array_map('strtolower', array_map('trim', array_column(array_filter($raw_approved, function($c){ return ($c['type'] ?? 'individu') !== 'rundayan'; }), 'nominator_name'))))),
+            'total_pemilih_rundayan'      => count(array_unique(array_map('strtolower', array_map('trim', array_column(array_filter($raw_approved, function($c){ return ($c['type'] ?? 'individu') === 'rundayan'; }), 'nominator_name'))))),
+            'total_pemilih_keseluruhan'   => count(array_unique(array_map('strtolower', array_map('trim', array_column($raw_approved, 'nominator_name'))))),
+            'rundayan_input_status'       => $rundayan_input_status,
+            'rundayan_modal_data'         => $rundayan_modal_data
         ];
 
         $this->load->view('yayasan/rekapitulasi', $data);

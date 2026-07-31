@@ -30,12 +30,15 @@ class Familytree extends CI_Controller
 
     public function index()
     {
-        $data = [];
-        if ($this->session->userdata('logged_in')) {
-            $user_id = $this->session->userdata('user_id');
-            $member = $this->db->get_where('family_members', ['user_id' => $user_id])->row();
-            $data['logged_in_member_id'] = $member ? $member->id : null;
+        if (!$this->session->userdata('logged_in')) {
+            redirect('auth/');
+            return;
         }
+
+        $data = [];
+        $user_id = $this->session->userdata('user_id');
+        $member = $this->db->get_where('family_members', ['user_id' => $user_id])->row();
+        $data['logged_in_member_id'] = $member ? $member->id : null;
 
         $this->load->view('templates/header');
         $this->load->view('partials/navbar');
