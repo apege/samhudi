@@ -1178,16 +1178,16 @@ if (!function_exists('render_custom_pagination')) {
                     formatter: function() {
                         const p = this.point;
                         let html = `<div style="padding: 4px 6px;">`;
-                        html += `<div style="font-weight: 800; font-size: 14px; color: #D4B571; margin-bottom: 4px;">${p.name}</div>`;
+                        html += `<div style="font-weight: 800; font-size: 14px; color: #ef4444; margin-bottom: 4px;">${p.name}</div>`;
                         if (p.roles) {
                             html += `<div style="margin-bottom: 4px;"><b>Sebagai Calon:</b> <span style="color:#f59e0b; font-weight:700;">${p.roles}</span></div>`;
                         }
-                        html += `<div><b>Total Suara:</b> <span style="color:#10b981;">${p.y} Suara (${p.percentage.toFixed(1)}%)</span></div>`;
+                        html += `<div><b>Total Suara:</b> <span style="color:#10b981; font-weight:700;">${p.y} Suara (${p.percentage.toFixed(1)}%)</span></div>`;
                         if (p.nominators) {
                             html += `<div style="margin-top: 4px;"><b>Pengusul / Pemilih:</b> <span style="color:#e2e8f0;">${p.nominators}</span></div>`;
                         }
                         if (p.breakdown) {
-                            html += `<div style="margin-top: 2px;"><b>Rincian:</b> <span style="color:#38bdf8;">${p.breakdown}</span></div>`;
+                            html += `<div style="margin-top: 2px;"><b>Rincian:</b> <span style="color:#ef4444; font-weight:700;">${p.breakdown}</span></div>`;
                         }
                         html += `</div>`;
                         return html;
